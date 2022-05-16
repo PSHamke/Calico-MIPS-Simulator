@@ -3,7 +3,7 @@
 #include <string>
 
 class OutputWindow {
-public :
+public : // Make it singleton
 	OutputWindow() {}
 	~OutputWindow() {}
 	void Render(const char* aTitle, const ImVec2& aSize, bool aBorder = false);

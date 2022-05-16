@@ -1,9 +1,11 @@
 #include "Application.h"
 #include "font.h"
 #include "iconcpp.h"
+#include "TextEditor.h"
+#include "menu.h"
 
 static bool Enabled = true;
-HWND Window = nullptr;
+
 
 LPDIRECT3DDEVICE9        g_pd3dDevice;
 D3DPRESENT_PARAMETERS    g_d3dpp;
@@ -28,11 +30,11 @@ Application::~Application()
 
 void Application::Init()
 {
-	WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(0), 0, 0, 0, 0, L"Calico|MIPS Simulator", 0 };
+	wc = { sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(0), 0, 0, 0, 0, L"Calico|MIPS Simulator", 0 };
 	RegisterClassEx(&wc);
-	Window = CreateWindow(wc.lpszClassName, L"Calico|MIPS Simulator", WS_POPUP, 0, 0, 5, 5, 0, 0, wc.hInstance, 0);
+	hWnd = CreateWindow(wc.lpszClassName, L"Calico|MIPS Simulator", WS_POPUP, 0, 0, 5, 5, 0, 0, wc.hInstance, 0);
 
-	if (!CreateDeviceD3D(Window)) {
+	if (!CreateDeviceD3D(hWnd)) {
 		CleanupDeviceD3D();
 		UnregisterClass(wc.lpszClassName, wc.hInstance);
 		return;
@@ -47,8 +49,8 @@ void Application::Init()
 	SetConsoleTextAttribute(h, 5);
 #endif
 
-	ShowWindow(Window, SW_HIDE);
-	UpdateWindow(Window);
+	ShowWindow(hWnd, SW_HIDE);
+	UpdateWindow(hWnd);
 
 	ImGui::CreateContext();
 
@@ -79,14 +81,29 @@ void Application::Init()
 		style.WindowRounding = 0.0f;
 		style.Colors[ImGuiCol_WindowBg].w = 1.0f;
 	}
-
-	ImGui_ImplWin32_Init(Window);
+	
+	ImGui_ImplWin32_Init(hWnd);
 	ImGui_ImplDX9_Init(g_pd3dDevice);
 	ZeroMemory(&msg, sizeof(msg));
 }
 
 void Application::Run()
 {
+	static TextEditor editor;
+	static TextEditor editor2;
+	static TextEditor editor4;
+	static TextEditor* editor3 = new TextEditor();
+	editor.setSubTextEditor(editor3);
+	static OutputWindow* outputWnd = new OutputWindow();
+	editor.setOutputWindowRef(outputWnd);
+	editor.setStartText(".text");
+	editor.setStartSegmentValue(0x400000);
+	editor2.setStartText(".data");
+	editor2.setStartSegmentValue(0x1001000);
+	editor3->setStartText("C Output");
+	editor4.setStartText("Output");
+	editor.SetText("main:\n\t ");
+	
 	while (msg.message != WM_QUIT)
 	{
 		if (PeekMessage(&msg, 0, 0U, 0U, PM_REMOVE))
@@ -98,13 +115,16 @@ void Application::Run()
 
 		ImGui_ImplDX9_NewFrame();
 		ImGui_ImplWin32_NewFrame();
+		Menu::Theme();
 		ImGui::NewFrame();
 		
-			ImGui::Begin("Calico", 0, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoResize);
-			{
-				
-			}
-			ImGui::End();
+		ImGui::Begin("CalicoX", 0, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoResize);
+		{
+
+			Menu::TitleBar(msg);
+			Menu::Render(editor, editor2, *editor3, editor4);
+		}
+		ImGui::End();
 		
 		ImGui::EndFrame();
 
@@ -130,11 +150,18 @@ void Application::Run()
 			msg.message = WM_QUIT;
 		}
 	}
+	Shutdown();
 }
 
 void Application::Shutdown()
 {
-	
+	ImGui_ImplDX9_Shutdown();
+	ImGui_ImplWin32_Shutdown();
+	ImGui::DestroyContext();
+
+	CleanupDeviceD3D();
+	DestroyWindow(hWnd);
+	UnregisterClass(wc.lpszClassName, wc.hInstance);
 }
 
 bool Application::CreateDeviceD3D(HWND hWnd)

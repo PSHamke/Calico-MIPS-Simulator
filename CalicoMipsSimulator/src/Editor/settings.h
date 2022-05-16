@@ -5,4 +5,6 @@
 namespace Settings
 {
 	static int Tab = 0;
+	static bool MemoryViewActive = 0;
+	static bool RegisterViewActive = 0;
 }

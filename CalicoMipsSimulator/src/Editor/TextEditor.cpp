@@ -5,6 +5,7 @@
 #include <cmath>
 
 #include "TextEditor.h"
+#include "MipsLayer.h"
 
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui.h" // for imGui::GetCurrentWindow()
@@ -702,6 +703,8 @@ void TextEditor::HandleKeyboardInputs()
 	auto ctrl = io.ConfigMacOSXBehaviors ? io.KeySuper : io.KeyCtrl;
 	auto alt = io.ConfigMacOSXBehaviors ? io.KeyCtrl : io.KeyAlt;
 
+	
+
 	if (ImGui::IsWindowFocused())
 	{
 		if (ImGui::IsWindowHovered())
@@ -1022,7 +1025,7 @@ void TextEditor::Render()
 				{
 					const ImVec2 newOffset(textScreenPos.x + bufferOffset.x, textScreenPos.y + bufferOffset.y);
 					drawList->AddText(newOffset, prevColor, mLineBuffer.c_str());
-					std::cout <<"Line Buf = " << mLineBuffer.c_str() << " Col= "<< prevColor<<"\n";
+					//std::cout <<"Line Buf = " << mLineBuffer.c_str() << " Col= "<< prevColor<<"\n";
 					 
 					auto textSize = ImGui::GetFont()->CalcTextSizeA(ImGui::GetFontSize(), FLT_MAX, -1.0f, mLineBuffer.c_str(), nullptr, nullptr);
 					bufferOffset.x += textSize.x;
@@ -1334,7 +1337,8 @@ void TextEditor::EnterCharacter(ImWchar aChar, bool aShift)
 		InsertLine(coord.mLine + 1);
 		auto& line = mLines[coord.mLine];
 		auto& newLine = mLines[coord.mLine + 1];
-		getOutputWindowRef()->output = GetCurrentLineText();
+		
+		
 
 		if (mLanguageDefinition.mAutoIndentation)
 			for (size_t it = 0; it < line.size() && isascii(line[it].mChar) && isblank(line[it].mChar); ++it)
@@ -1346,6 +1350,7 @@ void TextEditor::EnterCharacter(ImWchar aChar, bool aShift)
 		line.erase(line.begin() + cindex, line.begin() + line.size());
 		SetCursorPosition(Coordinates(coord.mLine + 1, GetCharacterColumn(coord.mLine + 1, (int)whitespaceSize)));
 		u.mAdded = (char)aChar;
+		getSubTextEditor()->SetText(MIPSLayer::MIPS::TranslateToC(GetText())); // Turn into C code 
 	}
 	else
 	{
@@ -2198,7 +2203,7 @@ void TextEditor::ColorizeRange(int aFromLine, int aToLine)
 			{
 				// todo : remove
 				//printf("using regex for %.*s\n", first + 10 < last ? 10 : int(last - first), first);
-				printf("Using regex for first = %s and last = %s\n", first, last);
+				//printf("Using regex for first = %s and last = %s\n", first, last);
 				for (auto& p : mRegexList)
 				{
 					if (std::regex_search(first, last, results, p.first, std::regex_constants::match_continuous))
@@ -2208,7 +2213,7 @@ void TextEditor::ColorizeRange(int aFromLine, int aToLine)
 						auto& v = *results.begin();
 						token_begin = v.first;
 						token_end = v.second;
-						std::cout <<"\nToken Begin " << token_begin << " Token End " << token_end << "\n";
+						//std::cout <<"\nToken Begin " << token_begin << " Token End " << token_end << "\n";
 						token_color = p.second;
 						break;
 					}
@@ -2226,7 +2231,7 @@ void TextEditor::ColorizeRange(int aFromLine, int aToLine)
 				if (token_color == PaletteIndex::Identifier)
 				{
 					id.assign(token_begin, token_end);
-					std::cout<<"Id = "<< id << "\n";
+					//std::cout<<"Id = "<< id << "\n";
 					// todo : allmost all language definitions use lower case to specify keywords, so shouldn't this use ::tolower ?
 					if (!mLanguageDefinition.mCaseSensitive)
 						std::transform(id.begin(), id.end(), id.begin(), ::toupper);
@@ -2241,7 +2246,7 @@ void TextEditor::ColorizeRange(int aFromLine, int aToLine)
 							token_color = PaletteIndex::KnownIdentifier;
 						
 						else if (mLanguageDefinition.mPreprocIdentifiers.count(id) != 0) {
-							std::cout << "Here!\n";
+							//std::cout << "Here!\n";
 							token_color = PaletteIndex::PreprocIdentifier;
 						}
 						
@@ -3256,6 +3261,14 @@ void TextEditor::setOutputWindowRef(OutputWindow* outputWindow) {
 
 OutputWindow* TextEditor::getOutputWindowRef() {
 	return this->mOutputWnd;
+}
+
+TextEditor* TextEditor::getSubTextEditor() {
+	return this->mSubTextEditor;
+}
+
+void TextEditor::setSubTextEditor(TextEditor* subTextEditor) {
+	this->mSubTextEditor = subTextEditor;
 }
 
 

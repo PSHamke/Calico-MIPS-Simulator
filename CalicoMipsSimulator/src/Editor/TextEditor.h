@@ -274,6 +274,8 @@ public:
 	unsigned int getStartSegmentValue();
 	OutputWindow* getOutputWindowRef();
 	void setOutputWindowRef(OutputWindow* outputWindow);
+	TextEditor* getSubTextEditor();
+	void setSubTextEditor(TextEditor* subTextEditor);
 private:
 	typedef std::vector<std::pair<std::regex, PaletteIndex>> RegexList;
 
@@ -396,5 +398,6 @@ private:
 	std::string mStartText;
 	unsigned int mStartSegmentValue;
 	OutputWindow* mOutputWnd;
+	TextEditor* mSubTextEditor;
 	float mLastClick;
 };

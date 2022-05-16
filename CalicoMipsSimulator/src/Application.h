@@ -34,6 +34,8 @@ public:
 private:
 	ApplicationSpecification m_Specification;
 	bool m_Running = false;
+	WNDCLASSEX wc;
+	HWND hWnd;
 	MSG msg;
 };
 Application* CreateApplication(int argc, char** argv);

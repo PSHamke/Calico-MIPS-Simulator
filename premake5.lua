@@ -28,6 +28,8 @@ project "CalicoMipsSimulator"
 	includedirs
 	{
 		"%{prj.name}/src",
+		"%{prj.name}/src/MIPS",
+		"%{prj.name}/src/editor",
 		"%{prj.name}/vendor/spdlog/include",
 		"%{IncludeDir.ImGui}"
 		
