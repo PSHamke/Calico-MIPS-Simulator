@@ -3,6 +3,7 @@
 #include "iconcpp.h"
 #include "TextEditor.h"
 #include "menu.h"
+#include "Log.h"
 
 static bool Enabled = true;
 
@@ -40,6 +41,8 @@ void Application::Init()
 		return;
 	}
 
+	
+
 #if CL_DEBUG
 
 	AllocConsole();
@@ -47,6 +50,7 @@ void Application::Init()
 	freopen_s(&fp, "CONOUT$", "w", stdout);
 	HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
 	SetConsoleTextAttribute(h, 5);
+	Log::Init();
 #endif
 
 	ShowWindow(hWnd, SW_HIDE);
@@ -120,7 +124,7 @@ void Application::Run()
 		
 		ImGui::Begin("CalicoX", 0, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoResize);
 		{
-
+			CL_CORE_INFO("Running!");
 			Menu::TitleBar(msg);
 			Menu::Render(editor, editor2, *editor3, editor4);
 		}
@@ -233,12 +237,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 Application* CreateApplication(int argc, char** argv)
 {
-	
+
 	Application::ApplicationSpecification spec;
 	float aspectRatio = 16 / 9.f;
 	spec.Name = "Walnut Calico Example";
 	spec.Width = 1500;
 	spec.Height = spec.Width / aspectRatio;
 	Application* app = new Application(spec);
+	
 	return app;
 }
