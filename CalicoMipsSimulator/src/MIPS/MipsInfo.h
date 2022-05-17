@@ -1,7 +1,7 @@
 #pragma once
 #include "vector"
 #include "string"
-#define BIT(X) 1<<X
+#include "Core.h"
 namespace MIPSLayer {
 	enum {
 		Reg_Constant_Value = BIT(0),
@@ -18,7 +18,7 @@ namespace MIPSLayer {
 		Reg_Return_Address = BIT(11),
 		Special_Shamt = BIT(12),
 		Special_Constant = BIT(13),
-		Special_Negligible= BIT(14),
+		Special_Negligible = BIT(14),
 		Reg_Error = BIT(15)
 	};
 	std::vector<int>& InstructionInfo(const std::string& token);

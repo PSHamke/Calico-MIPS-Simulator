@@ -2,8 +2,9 @@
 #include "settings.h"
 #include "imguipp.h"
 #include "icons.h"
-
 #include "OutputWin.h"
+#include "Log.h"
+#include "MemoryView.h"
 extern ImFont* Consolas;
 void Menu::Render()
 {
@@ -29,15 +30,13 @@ void Menu::Render()
 		imguipp::center_text_ex("Calico|MIPS Simulator", 230, 1, false);
 	}
 	ImGui::NextColumn();
-	ImGui::SetColumnOffset(2, 720);
+	ImGui::SetColumnOffset(2, 765);
 	//Right side
 	{
 		
 		// Executor tab
 		if (Settings::Tab == 1)
 		{
-			
-			
 			
 			
 			if (ImGui::Button(ICON_FA_CHECK" Execute", ImVec2(115, 34))) {
@@ -51,7 +50,7 @@ void Menu::Render()
 			ImGui::Spacing();
 			ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarRounding, 0);
 			ImGui::PushFont(Consolas);
-			TextEditor::GetInstance("##MainEditor")->Render("##EditorWindow", ImVec2(imguipp::getx(), 580*(0.64f)));
+			TextEditor::GetInstance("##MainEditor")->Render("##EditorWindow", ImVec2(imguipp::getx(), 640*(0.64f)));
 			ImGui::PopFont();
 			ImGui::PopStyleVar();
 			//ImGui::Spacing();
@@ -62,7 +61,7 @@ void Menu::Render()
 			//ImGui::Spacing();
 			ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarRounding, 0);
 			ImGui::PushFont(Consolas);
-			TextEditor::GetInstance("##DataEditor")->Render("##EditorWindow2", ImVec2(imguipp::getx(), 580*(0.35f)));
+			TextEditor::GetInstance("##DataEditor")->Render("##EditorWindow2", ImVec2(imguipp::getx(), 640*(0.35f)));
 			ImGui::PopFont();
 			ImGui::PopStyleVar();
 			ImGui::Spacing();
@@ -102,7 +101,7 @@ void Menu::Render()
 	}
 
 	ImGui::NextColumn();
-	//ImGui::SetColumnOffset(3, 720);
+	//ImGui::SetColumnOffset(3, 1300);
 	{
 		if (Settings::Tab == 1)
 		{
@@ -118,14 +117,26 @@ void Menu::Render()
 			//outputWindow.Render("##OutputWindow", ImVec2(imguipp::getx(), 580));
 			//std::cout << outputWindow.output << "\n";
 			//ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 42);
-			ImGui::Spacing();			
-			TextEditor::GetInstance("##COutputEditor")->Render("##COutputWindow", ImVec2(imguipp::getx(), 580 * (0.64f)));
-			TextEditor::GetInstance("##OutputEditor")->Render("##OutputWindow", ImVec2(imguipp::getx(), 580 * (0.35f)));
+			ImGui::Spacing();	
+			ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarRounding, 0);
+			ImGui::PushFont(Consolas);
+			TextEditor::GetInstance("##COutputEditor")->Render("##COutputWindow", ImVec2(imguipp::getx(), 640 * (0.64f)));
+			ImGui::PopFont();
+			ImGui::PopStyleVar();
+			ImGui::Spacing();
+			ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarRounding, 0);
+			ImGui::PushFont(Consolas);
+			TextEditor::GetInstance("##OutputEditor")->Render("##OutputWindow", ImVec2(imguipp::getx(), 640 * (0.345)));
+			ImGui::PopFont();
+			ImGui::PopStyleVar();
+			ImGui::Spacing();
 			if (Settings::MemoryViewActive) {
 				Menu::MemoryViewTheme();
 				ImGui::Begin("Calico Memory View", 0, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar);
 				Menu::TitleBarMemoryView();
-				ImGui::Text("works!");
+				
+				MemoryView::GetInstance("##MainMemoryView")->Render();
+				//ImGui::Text("works!");
 				ImGui::End();
 			}
 			
@@ -146,7 +157,7 @@ void Menu::Theme()
 	ImGuiStyle* style = &ImGui::GetStyle();
 	// to do create spec class 
 	float aspectRatio = 16 /9.f;
-	float width = 1200.f;
+	float width = 1300.f;
 	float height = width / aspectRatio;
 	//std::cout << height << "\n";
 	style->WindowBorderSize = 0;

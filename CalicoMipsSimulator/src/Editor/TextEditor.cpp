@@ -15,6 +15,8 @@
 
 std::vector<TextEditor*> TextEditor::Instances;
 
+
+
 template<class InputIt1, class InputIt2, class BinaryPredicate>
 bool equals(InputIt1 first1, InputIt1 last1,
 	InputIt2 first2, InputIt2 last2, BinaryPredicate p)
@@ -51,6 +53,7 @@ TextEditor::TextEditor()
 	, mIgnoreImGuiChild(false)
 	, mShowWhitespaces(true)
 	, mStartTime(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count())
+	, mFlag(Editor_None)
 {
 	SetPalette(GetDarkPalette());
 	SetLanguageDefinition(LanguageDefinition::HLSL());
@@ -61,10 +64,11 @@ TextEditor::~TextEditor()
 {
 }
 
-TextEditor* TextEditor::CreateInstance(const std::string& pInstanceID)
+TextEditor* TextEditor::CreateInstance(const std::string& pInstanceID, unsigned int flag)
 {
 	TextEditor* instance = new TextEditor();
 	if (instance->SetInstanceId(pInstanceID)) {
+		instance->SetFlag(flag);
 		Instances.push_back(instance);
 		return instance;
 	}
@@ -73,6 +77,32 @@ TextEditor* TextEditor::CreateInstance(const std::string& pInstanceID)
 		return nullptr;
 	}
 }
+
+bool TextEditor::FreeInstance(const std::string& pInstanceID)
+{
+	for (std::vector<TextEditor*>::iterator i = Instances.begin(), endI = Instances.end(); i != endI; ++i)
+	{
+		if ((*i)->GetInstanceId() == pInstanceID)
+		{
+			delete *i;
+			Instances.erase(i);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool TextEditor::FreeAllInstances() {
+	
+	for (std::vector<TextEditor*>::iterator i = Instances.begin(), endI = Instances.end(); i != endI; ++i)
+	{
+		delete *i;
+	}
+	Instances.clear();
+	return true;
+}
+
+
 
 TextEditor* TextEditor::GetInstance(const std::string& pInstanceID)
 {
@@ -103,6 +133,11 @@ void TextEditor::SetLanguageDefinition(const LanguageDefinition& aLanguageDef)
 		mRegexList.push_back(std::make_pair(std::regex(r.first, std::regex_constants::optimize), r.second));
 
 	Colorize();
+}
+void TextEditor::SetFlag(unsigned int  flag)
+{
+	mFlag |= flag;
+	//CL_CORE_INFO("Flag {0}", mFlag);
 }
 
 void TextEditor::SetPalette(const Palette& aValue)
@@ -997,8 +1032,10 @@ void TextEditor::Render()
 			snprintf(buf, 16, "%X  ",GetStartSegmentValue()+(lineNo*4));
 
 			auto lineNoWidth = ImGui::GetFont()->CalcTextSizeA(ImGui::GetFontSize(), FLT_MAX, -1.0f, buf, nullptr, nullptr).x;
-			drawList->AddText(ImVec2(lineStartScreenPos.x + mTextStart - lineNoWidth, lineStartScreenPos.y), mPalette[(int)PaletteIndex::LineNumber], buf);
-
+			if (!(mFlag & Editor_No_LineNumbers)) {
+				drawList->AddText(ImVec2(lineStartScreenPos.x + mTextStart - lineNoWidth, lineStartScreenPos.y), mPalette[(int)PaletteIndex::LineNumber], buf);
+			}
+			
 			if (mState.mCursorPosition.mLine == lineNo)
 			{
 				auto focused = ImGui::IsWindowFocused();
@@ -1007,12 +1044,15 @@ void TextEditor::Render()
 				if (!HasSelection())
 				{
 					auto end = ImVec2(start.x + contentSize.x + scrollX, start.y + mCharAdvance.y);
-					drawList->AddRectFilled(start, end, mPalette[(int)(focused ? PaletteIndex::CurrentLineFill : PaletteIndex::CurrentLineFillInactive)]);
-					drawList->AddRect(start, end, mPalette[(int)PaletteIndex::CurrentLineEdge], 1.0f);
+					if (!(mFlag & Editor_No_LineHiglight)) {
+						drawList->AddRectFilled(start, end, mPalette[(int)(focused ? PaletteIndex::CurrentLineFill : PaletteIndex::CurrentLineFillInactive)]);
+						drawList->AddRect(start, end, mPalette[(int)PaletteIndex::CurrentLineEdge], 1.0f);
+					}
+					
 				}
 
 				// Render the cursor
-				if (focused)
+				if (focused && !(mFlag & Editor_No_Cursor))
 				{
 					auto timeEnd = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 					auto elapsed = timeEnd - mStartTime;
@@ -1157,7 +1197,7 @@ void TextEditor::Render()
 		mScrollToCursor = false;
 	}
 }
-#include "iostream"
+
 void TextEditor::Render(const char* aTitle, const ImVec2& aSize, bool aBorder)
 {
 	mWithinRender = true;
@@ -1165,7 +1205,7 @@ void TextEditor::Render(const char* aTitle, const ImVec2& aSize, bool aBorder)
 	mCursorPositionChanged = false;
 
 	ImGui::PushStyleColor(ImGuiCol_ChildBg, ImGui::ColorConvertU32ToFloat4(mPalette[(int)PaletteIndex::Background]));
-	//std::cout << mPalette[(int)PaletteIndex::Background] << "\n";
+	
 	ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0.0f, 0.0f));
 	if (!mIgnoreImGuiChild)
 		ImGui::BeginChild(aTitle, aSize, aBorder, ImGuiWindowFlags_HorizontalScrollbar  | ImGuiWindowFlags_NoMove);
@@ -1175,7 +1215,10 @@ void TextEditor::Render(const char* aTitle, const ImVec2& aSize, bool aBorder)
 		ImGui::PushAllowKeyboardFocus(true);
 	}
 	
+	//ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 255, 0, 255));
 	ImGui::Text(GetStartText().c_str());
+	//ImGui::PopStyleColor();
+	
 	if (ImGui::IsItemHovered())
 		ImGui::SetTooltip("Segment starts from 0x%X",GetStartSegmentValue());
 	
@@ -2246,8 +2289,7 @@ void TextEditor::ColorizeRange(int aFromLine, int aToLine)
 			if (hasTokenizeResult == false)
 			{
 				// todo : remove
-				//printf("using regex for %.*s\n", first + 10 < last ? 10 : int(last - first), first);
-				//printf("Using regex for first = %s and last = %s\n", first, last);
+				
 				for (auto& p : mRegexList)
 				{
 					if (std::regex_search(first, last, results, p.first, std::regex_constants::match_continuous))
@@ -2257,7 +2299,7 @@ void TextEditor::ColorizeRange(int aFromLine, int aToLine)
 						auto& v = *results.begin();
 						token_begin = v.first;
 						token_end = v.second;
-						//std::cout <<"\nToken Begin " << token_begin << " Token End " << token_end << "\n";
+						
 						token_color = p.second;
 						break;
 					}

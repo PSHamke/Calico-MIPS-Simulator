@@ -5,6 +5,7 @@
 #include "menu.h"
 #include "Log.h"
 #include "Core.h"
+#include "MemoryView.h"
 static bool Enabled = true;
 
 
@@ -16,8 +17,8 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 bool InitEditors();
 
-
 ImFont* Consolas = nullptr;
+
 
 
 Application::Application(const ApplicationSpecification& applicationSpecification /*= ApplicationSpecification()*/)
@@ -115,7 +116,7 @@ void Application::Run()
 		
 		ImGui::Begin("CalicoX", 0, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoResize);
 		{
-			CL_CORE_INFO("Running!");
+			//CL_CORE_INFO("Running!");
 			Menu::TitleBar(msg);
 			Menu::Render();
 		}
@@ -154,6 +155,8 @@ void Application::Shutdown()
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
 
+	TextEditor::FreeAllInstances();
+	
 	CleanupDeviceD3D();
 	DestroyWindow(hWnd);
 	UnregisterClass(wc.lpszClassName, wc.hInstance);
@@ -245,11 +248,15 @@ bool InitEditors() {
 	TextEditor* dataEditor    = TextEditor::CreateInstance("##DataEditor");
 	TextEditor* cOutputEditor = TextEditor::CreateInstance("##COutputEditor");
 	TextEditor* outputEditor  = TextEditor::CreateInstance("##OutputEditor");
+	
 
 	if (!(mainEditor && dataEditor && cOutputEditor && outputEditor)) {
 		return false;
 	}
-
+	
+	MemoryView* memoryView = MemoryView::CreateInstance("##MainMemoryView");
+	memoryView->SetFont(Consolas);
+	
 	mainEditor->SetStartText(".text");
 	mainEditor->SetStartSegmentValue(0x4000000);
 	mainEditor->SetText("main:\n\t");
@@ -268,16 +275,19 @@ bool InitEditors() {
 	
 	
 	cOutputEditor->SetStartText("C Output");
+	cOutputEditor->SetStartSegmentValue(0x4000000);
 	cOutputEditor->SetShowWhitespaces(false);
 	cOutputEditor->SetReadOnly(true);
 	cOutputEditor->SetPalette(TextEditor::GetDarkPalette());
 	cOutputEditor->SetLanguageDefinition(TextEditor::LanguageDefinition::C());
-	
+	cOutputEditor->SetFlag(Editor_No_Cursor);
 	outputEditor->SetStartText("Output");
+	outputEditor->SetStartSegmentValue(0x1001000);
 	outputEditor->SetShowWhitespaces(false);
 	outputEditor->SetReadOnly(true);
 	outputEditor->SetPalette(TextEditor::GetDarkPalette());
 	outputEditor->SetLanguageDefinition(TextEditor::LanguageDefinition::C());
+	outputEditor->SetFlag(Editor_No_LineNumbers | Editor_No_Cursor | Editor_No_LineHiglight);
 	return true;
 
 }

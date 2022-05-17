@@ -7,3 +7,5 @@
 #else 
 #define CL_CORE_ASSERT(x, ...)
 #endif
+
+#define BIT(X) 1<<X

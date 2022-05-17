@@ -37,6 +37,7 @@ private:
 	WNDCLASSEX wc;
 	HWND hWnd;
 	MSG msg;
+	
 };
 Application* CreateApplication(int argc, char** argv);
 

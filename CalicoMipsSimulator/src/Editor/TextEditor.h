@@ -10,6 +10,19 @@
 #include <regex>
 #include "imgui.h"
 #include "OutputWin.h"
+#include "Core.h"
+#include "Log.h"
+enum EditorProperties {
+
+	Editor_None = BIT(0),
+	Editor_ReadOnly = BIT(1),
+	Editor_AutoIndent = BIT(2),
+	Editor_No_LineNumbers = BIT(3),
+	Editor_No_Cursor = BIT(4),
+	Editor_No_LineHiglight = BIT(5)
+};
+
+
 class TextEditor
 {
 public:
@@ -47,6 +60,7 @@ public:
 		Line
 	};
 
+	
 	struct Breakpoint
 	{
 		int mLine;
@@ -187,11 +201,15 @@ public:
 	TextEditor();
 	~TextEditor();
 
-	static TextEditor* CreateInstance(const std::string& pInstanceID);
+	static TextEditor* CreateInstance(const std::string& pInstanceID, unsigned int flag = Editor_None);
 	static TextEditor* GetInstance(const std::string& pInstanceID);
 	static std::vector<TextEditor*>& GetAllInstances();
 	static std::vector<TextEditor*> Instances;
+	static bool FreeInstance(const std::string& pInstanceID);
+	static bool FreeAllInstances();
 	
+
+	void SetFlag(unsigned int flag);
 	std::string GetInstanceId();
 	
 	void SetLanguageDefinition(const LanguageDefinition& aLanguageDef);
@@ -403,8 +421,7 @@ private:
 
 	std::string mStartText;
 	unsigned int mStartSegmentValue;
-	OutputWindow* mOutputWnd;
-	TextEditor* mSubTextEditor;
 	float mLastClick;
 	std::string mInstanceId;
+	int mFlag;
 };
