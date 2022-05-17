@@ -187,6 +187,13 @@ public:
 	TextEditor();
 	~TextEditor();
 
+	static TextEditor* CreateInstance(const std::string& pInstanceID);
+	static TextEditor* GetInstance(const std::string& pInstanceID);
+	static std::vector<TextEditor*>& GetAllInstances();
+	static std::vector<TextEditor*> Instances;
+	
+	std::string GetInstanceId();
+	
 	void SetLanguageDefinition(const LanguageDefinition& aLanguageDef);
 	const LanguageDefinition& GetLanguageDefinition() const { return mLanguageDefinition; }
 
@@ -268,14 +275,11 @@ public:
 	static const Palette& GetLightPalette();
 	static const Palette& GetRetroBluePalette();
 
-	void setStartText(std::string startText);
-	std::string getStartText();
-	void setStartSegmentValue(unsigned int startSegmentValue);
-	unsigned int getStartSegmentValue();
-	OutputWindow* getOutputWindowRef();
-	void setOutputWindowRef(OutputWindow* outputWindow);
-	TextEditor* getSubTextEditor();
-	void setSubTextEditor(TextEditor* subTextEditor);
+	void SetStartText(std::string startText);
+	std::string GetStartText();
+	void SetStartSegmentValue(unsigned int startSegmentValue);
+	unsigned int GetStartSegmentValue();
+
 private:
 	typedef std::vector<std::pair<std::regex, PaletteIndex>> RegexList;
 
@@ -320,6 +324,8 @@ private:
 	};
 
 	typedef std::vector<UndoRecord> UndoBuffer;
+	
+	bool SetInstanceId(const std::string& const pInstanceID);
 
 	void ProcessInputs();
 	void Colorize(int aFromLine = 0, int aCount = -1);
@@ -400,4 +406,5 @@ private:
 	OutputWindow* mOutputWnd;
 	TextEditor* mSubTextEditor;
 	float mLastClick;
+	std::string mInstanceId;
 };

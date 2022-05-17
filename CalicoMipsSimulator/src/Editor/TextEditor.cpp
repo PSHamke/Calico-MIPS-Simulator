@@ -13,6 +13,8 @@
 // TODO
 // - multiline comments vs single-line: latter is blocking start of a ML
 
+std::vector<TextEditor*> TextEditor::Instances;
+
 template<class InputIt1, class InputIt2, class BinaryPredicate>
 bool equals(InputIt1 first1, InputIt1 last1,
 	InputIt2 first2, InputIt2 last2, BinaryPredicate p)
@@ -57,6 +59,39 @@ TextEditor::TextEditor()
 
 TextEditor::~TextEditor()
 {
+}
+
+TextEditor* TextEditor::CreateInstance(const std::string& pInstanceID)
+{
+	TextEditor* instance = new TextEditor();
+	if (instance->SetInstanceId(pInstanceID)) {
+		Instances.push_back(instance);
+		return instance;
+	}
+	else {
+		delete instance;
+		return nullptr;
+	}
+}
+
+TextEditor* TextEditor::GetInstance(const std::string& pInstanceID)
+{
+	for(auto& instance : Instances)
+	{
+		if(instance->GetInstanceId() == pInstanceID)
+			return instance;
+	}
+	return nullptr;
+}
+
+std::vector<TextEditor*>& TextEditor::GetAllInstances()
+{
+	return Instances;
+}
+
+std::string TextEditor::GetInstanceId()
+{
+	return this->mInstanceId;
 }
 
 void TextEditor::SetLanguageDefinition(const LanguageDefinition& aLanguageDef)
@@ -959,7 +994,7 @@ void TextEditor::Render()
 			}
 
 			// Draw line number (right aligned)
-			snprintf(buf, 16, "%X  ",getStartSegmentValue()+(lineNo*4));
+			snprintf(buf, 16, "%X  ",GetStartSegmentValue()+(lineNo*4));
 
 			auto lineNoWidth = ImGui::GetFont()->CalcTextSizeA(ImGui::GetFontSize(), FLT_MAX, -1.0f, buf, nullptr, nullptr).x;
 			drawList->AddText(ImVec2(lineStartScreenPos.x + mTextStart - lineNoWidth, lineStartScreenPos.y), mPalette[(int)PaletteIndex::LineNumber], buf);
@@ -1140,9 +1175,9 @@ void TextEditor::Render(const char* aTitle, const ImVec2& aSize, bool aBorder)
 		ImGui::PushAllowKeyboardFocus(true);
 	}
 	
-	ImGui::Text(getStartText().c_str());
+	ImGui::Text(GetStartText().c_str());
 	if (ImGui::IsItemHovered())
-		ImGui::SetTooltip("Segment starts from 0x%X",getStartSegmentValue());
+		ImGui::SetTooltip("Segment starts from 0x%X",GetStartSegmentValue());
 	
 	if (mHandleMouseInputs)
 		HandleMouseInputs();
@@ -1350,7 +1385,7 @@ void TextEditor::EnterCharacter(ImWchar aChar, bool aShift)
 		line.erase(line.begin() + cindex, line.begin() + line.size());
 		SetCursorPosition(Coordinates(coord.mLine + 1, GetCharacterColumn(coord.mLine + 1, (int)whitespaceSize)));
 		u.mAdded = (char)aChar;
-		getSubTextEditor()->SetText(MIPSLayer::MIPS::TranslateToC(GetText())); // Turn into C code 
+		TextEditor::GetInstance("##COutputEditor")->SetText(MIPSLayer::MIPS::TranslateToC(GetText())); // Turn into C code 
 	}
 	else
 	{
@@ -2139,6 +2174,15 @@ std::string TextEditor::GetCurrentLineText()const
 	return GetText(
 		Coordinates(mState.mCursorPosition.mLine, 0),
 		Coordinates(mState.mCursorPosition.mLine, lineLength));
+}
+
+bool TextEditor::SetInstanceId(const std::string& const pInstanceID)
+{
+	if (!GetInstance(pInstanceID)) {
+		mInstanceId = pInstanceID;
+		return true;
+	}
+	return false;
 }
 
 void TextEditor::ProcessInputs()
@@ -3241,34 +3285,19 @@ const TextEditor::LanguageDefinition& TextEditor::LanguageDefinition::MIPS()
 
 
 
-void TextEditor::setStartText(std::string startText) {
+void TextEditor::SetStartText(std::string startText) {
 	this->mStartText = startText;
 }
 
-std::string TextEditor::getStartText() {
+std::string TextEditor::GetStartText() {
 	return this->mStartText;
 }
-void TextEditor::setStartSegmentValue(unsigned int startSegmentValue) {
+void TextEditor::SetStartSegmentValue(unsigned int startSegmentValue) {
 	this->mStartSegmentValue = startSegmentValue;
 }
-unsigned int TextEditor::getStartSegmentValue() {
+unsigned int TextEditor::GetStartSegmentValue() {
 	return this->mStartSegmentValue;
 }
 
-void TextEditor::setOutputWindowRef(OutputWindow* outputWindow) {
-	this->mOutputWnd= outputWindow;
-}
-
-OutputWindow* TextEditor::getOutputWindowRef() {
-	return this->mOutputWnd;
-}
-
-TextEditor* TextEditor::getSubTextEditor() {
-	return this->mSubTextEditor;
-}
-
-void TextEditor::setSubTextEditor(TextEditor* subTextEditor) {
-	this->mSubTextEditor = subTextEditor;
-}
 
 

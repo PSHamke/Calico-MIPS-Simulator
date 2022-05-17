@@ -11,5 +11,5 @@ namespace Menu
 	void TitleBar(MSG& msg);
 	void TitleBarMemoryView();
 	void TitleBarRegisterView();
-	void Render(TextEditor& textSegmentEditor,TextEditor& dataSegmentEditor,TextEditor& CoutputEditor,TextEditor& outputWindow);
+	void Render();
 }

@@ -5,8 +5,7 @@
 
 #include "OutputWin.h"
 extern ImFont* Consolas;
-void Menu::Render(TextEditor& textSegmentEditor, TextEditor& dataSegmentEditor, TextEditor& cOutputEditor, 
-	TextEditor& outputWindow)
+void Menu::Render()
 {
 	ImGui::Columns(3);
 	ImGui::SetColumnOffset(1, 230);
@@ -38,29 +37,11 @@ void Menu::Render(TextEditor& textSegmentEditor, TextEditor& dataSegmentEditor, 
 		if (Settings::Tab == 1)
 		{
 			
-			textSegmentEditor.SetShowWhitespaces(false);
-			textSegmentEditor.SetReadOnly(false);
-			textSegmentEditor.SetPalette(TextEditor::GetDarkPalette());
-			textSegmentEditor.SetLanguageDefinition(TextEditor::LanguageDefinition::MIPS());
-
-			dataSegmentEditor.SetShowWhitespaces(false);
-			dataSegmentEditor.SetReadOnly(false);
-			dataSegmentEditor.SetPalette(TextEditor::GetDarkPalette());
-			dataSegmentEditor.SetLanguageDefinition(TextEditor::LanguageDefinition::MIPS());
-
-			cOutputEditor.SetShowWhitespaces(false);
-			cOutputEditor.SetReadOnly(true);
-			cOutputEditor.SetLanguageDefinition(TextEditor::LanguageDefinition::C());
-			cOutputEditor.SetPalette(TextEditor::GetDarkPalette());
 			
-			outputWindow.SetShowWhitespaces(false);
-			outputWindow.SetReadOnly(true);
-			outputWindow.SetLanguageDefinition(TextEditor::LanguageDefinition::C());
-			outputWindow.SetPalette(TextEditor::GetDarkPalette());
 			
 			
 			if (ImGui::Button(ICON_FA_CHECK" Execute", ImVec2(115, 34))) {
-				outputWindow.SetText("Executed!");
+				TextEditor::GetInstance("##OutputEditor")->SetText("Executed!");
 			}
 			ImGui::SameLine();
 			ImGui::SetCursorPosX(ImGui::GetCursorPosX() +imguipp::getx()-145); // Set Stop button place
@@ -70,7 +51,7 @@ void Menu::Render(TextEditor& textSegmentEditor, TextEditor& dataSegmentEditor, 
 			ImGui::Spacing();
 			ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarRounding, 0);
 			ImGui::PushFont(Consolas);
-			textSegmentEditor.Render("##EditorWindow", ImVec2(imguipp::getx(), 580*(0.64f)));
+			TextEditor::GetInstance("##MainEditor")->Render("##EditorWindow", ImVec2(imguipp::getx(), 580*(0.64f)));
 			ImGui::PopFont();
 			ImGui::PopStyleVar();
 			//ImGui::Spacing();
@@ -81,8 +62,7 @@ void Menu::Render(TextEditor& textSegmentEditor, TextEditor& dataSegmentEditor, 
 			//ImGui::Spacing();
 			ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarRounding, 0);
 			ImGui::PushFont(Consolas);
-			
-			dataSegmentEditor.Render("##EditorWindow2", ImVec2(imguipp::getx(), 580*(0.35f)));
+			TextEditor::GetInstance("##DataEditor")->Render("##EditorWindow2", ImVec2(imguipp::getx(), 580*(0.35f)));
 			ImGui::PopFont();
 			ImGui::PopStyleVar();
 			ImGui::Spacing();
@@ -139,8 +119,8 @@ void Menu::Render(TextEditor& textSegmentEditor, TextEditor& dataSegmentEditor, 
 			//std::cout << outputWindow.output << "\n";
 			//ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 42);
 			ImGui::Spacing();			
-			cOutputEditor.Render("##COutputWindow", ImVec2(imguipp::getx(), 580 * (0.64f)));
-			outputWindow.Render("##OutputWindow", ImVec2(imguipp::getx(), 580 * (0.35f)));
+			TextEditor::GetInstance("##COutputEditor")->Render("##COutputWindow", ImVec2(imguipp::getx(), 580 * (0.64f)));
+			TextEditor::GetInstance("##OutputEditor")->Render("##OutputWindow", ImVec2(imguipp::getx(), 580 * (0.35f)));
 			if (Settings::MemoryViewActive) {
 				Menu::MemoryViewTheme();
 				ImGui::Begin("Calico Memory View", 0, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar);

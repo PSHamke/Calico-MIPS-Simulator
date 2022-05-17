@@ -4,7 +4,7 @@
 #include "TextEditor.h"
 #include "menu.h"
 #include "Log.h"
-
+#include "Core.h"
 static bool Enabled = true;
 
 
@@ -14,6 +14,8 @@ LPDIRECT3D9              g_pD3D;
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+bool InitEditors();
+
 
 ImFont* Consolas = nullptr;
 
@@ -89,24 +91,13 @@ void Application::Init()
 	ImGui_ImplWin32_Init(hWnd);
 	ImGui_ImplDX9_Init(g_pd3dDevice);
 	ZeroMemory(&msg, sizeof(msg));
+
+	CL_CORE_ASSERT(InitEditors(), "Failed to initialize editors");
 }
 
 void Application::Run()
 {
-	static TextEditor editor;
-	static TextEditor editor2;
-	static TextEditor editor4;
-	static TextEditor* editor3 = new TextEditor();
-	editor.setSubTextEditor(editor3);
-	static OutputWindow* outputWnd = new OutputWindow();
-	editor.setOutputWindowRef(outputWnd);
-	editor.setStartText(".text");
-	editor.setStartSegmentValue(0x400000);
-	editor2.setStartText(".data");
-	editor2.setStartSegmentValue(0x1001000);
-	editor3->setStartText("C Output");
-	editor4.setStartText("Output");
-	editor.SetText("main:\n\t ");
+	
 	
 	while (msg.message != WM_QUIT)
 	{
@@ -126,7 +117,7 @@ void Application::Run()
 		{
 			CL_CORE_INFO("Running!");
 			Menu::TitleBar(msg);
-			Menu::Render(editor, editor2, *editor3, editor4);
+			Menu::Render();
 		}
 		ImGui::End();
 		
@@ -246,4 +237,47 @@ Application* CreateApplication(int argc, char** argv)
 	Application* app = new Application(spec);
 	
 	return app;
+}
+
+bool InitEditors() {
+	
+	TextEditor* mainEditor    = TextEditor::CreateInstance("##MainEditor");
+	TextEditor* dataEditor    = TextEditor::CreateInstance("##DataEditor");
+	TextEditor* cOutputEditor = TextEditor::CreateInstance("##COutputEditor");
+	TextEditor* outputEditor  = TextEditor::CreateInstance("##OutputEditor");
+
+	if (!(mainEditor && dataEditor && cOutputEditor && outputEditor)) {
+		return false;
+	}
+
+	mainEditor->SetStartText(".text");
+	mainEditor->SetStartSegmentValue(0x4000000);
+	mainEditor->SetText("main:\n\t");
+	mainEditor->SetShowWhitespaces(false);
+	mainEditor->SetReadOnly(false);
+	mainEditor->SetPalette(TextEditor::GetDarkPalette());
+	mainEditor->SetLanguageDefinition(TextEditor::LanguageDefinition::MIPS());
+	
+	
+	dataEditor->SetStartText(".data");
+	dataEditor->SetStartSegmentValue(0x1001000);
+	dataEditor->SetShowWhitespaces(false);
+	dataEditor->SetReadOnly(false);
+	dataEditor->SetPalette(TextEditor::GetDarkPalette());
+	dataEditor->SetLanguageDefinition(TextEditor::LanguageDefinition::MIPS());
+	
+	
+	cOutputEditor->SetStartText("C Output");
+	cOutputEditor->SetShowWhitespaces(false);
+	cOutputEditor->SetReadOnly(true);
+	cOutputEditor->SetPalette(TextEditor::GetDarkPalette());
+	cOutputEditor->SetLanguageDefinition(TextEditor::LanguageDefinition::C());
+	
+	outputEditor->SetStartText("Output");
+	outputEditor->SetShowWhitespaces(false);
+	outputEditor->SetReadOnly(true);
+	outputEditor->SetPalette(TextEditor::GetDarkPalette());
+	outputEditor->SetLanguageDefinition(TextEditor::LanguageDefinition::C());
+	return true;
+
 }
