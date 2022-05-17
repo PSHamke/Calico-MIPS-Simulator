@@ -6,6 +6,7 @@
 #include "Log.h"
 #include "Core.h"
 #include "MemoryView.h"
+#include "RegisterView.h"
 static bool Enabled = true;
 
 
@@ -18,6 +19,7 @@ LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 bool InitEditors();
 
 ImFont* Consolas = nullptr;
+ImFont* Consolas2 = nullptr;
 
 
 
@@ -80,7 +82,9 @@ void Application::Init()
 	io.Fonts->AddFontFromMemoryTTF(const_cast<std::uint8_t*>(Custom), sizeof(Custom), 21.f, &CustomFont);
 	io.Fonts->AddFontFromMemoryCompressedTTF(font_awesome_data, font_awesome_size, 19.0f, &icons_config, icons_ranges);
 	Consolas = io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\Consola.ttf", 17);
-	io.Fonts->AddFontDefault();
+	io.Fonts->AddFontDefault();	
+	Consolas2 = io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\Consola.ttf", 13);
+	
 
 	ImGuiStyle& style = ImGui::GetStyle();
 	if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
@@ -255,7 +259,10 @@ bool InitEditors() {
 	}
 	
 	MemoryView* memoryView = MemoryView::CreateInstance("##MainMemoryView");
-	memoryView->SetFont(Consolas);
+	memoryView->SetFont(Consolas2);
+
+	RegisterView* registerView = RegisterView::CreateInstance("##MainRegisterView");
+	registerView->SetFont(Consolas2);
 	
 	mainEditor->SetStartText(".text");
 	mainEditor->SetStartSegmentValue(0x4000000);

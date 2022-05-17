@@ -1,8 +1,8 @@
 #include "MemoryView.h"
-
+#include "Log.h"
 
 std::vector<MemoryView*> MemoryView::Instances;
-
+int header_index = 0;
 MemoryView::MemoryView() {
 	
 }
@@ -95,34 +95,42 @@ void MemoryView::Render()
 	char buf1[17];
 	char buf2[17];
 	char buf3[20];
-	int header_index = 0;
+	
 	int addressBase = 0x400000;
 	int virtualMemory[1000][16];
-	//mFont->Scale = 0.75;
-	//ImGui::PushFont(mFont);
+	for (int i = 0; i < 1000; i++) {
+		for (int j = 0; j < 16; j++) {
+			virtualMemory[i][j] = j;
+		}
+	}
+	ImGui::PushFont(mFont);
 	static ImGuiTableFlags flags = ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV | ImGuiTableFlags_Hideable;
 	float	TEXT_BASE_HEIGHT = ImGui::GetTextLineHeightWithSpacing();
+
 	
 	bool focus_address = true;
 	int address_index = 100;
 	ImGuiListClipper clipper;
 	// When using ScrollX or ScrollY we need to specify a size for our table container!
 	// Otherwise by default the table will fit all available space, like a BeginChild() call.
-	ImVec2 outer_size = ImVec2(700.0f, TEXT_BASE_HEIGHT * 20);
-	if (ImGui::BeginTable("table_scrolly", 33, flags, outer_size))
+	CL_CORE_WARN("Text base = {0}", TEXT_BASE_HEIGHT);
+	ImVec2 outer_size = ImVec2(630, TEXT_BASE_HEIGHT * 20);
+	if (ImGui::BeginTable("table_scrolly", 18, flags,outer_size))
 	{
 
 		ImGui::TableSetupScrollFreeze(0, 1); // Make top row always visible
-		ImGui::TableSetupColumn("Address", ImGuiTableColumnFlags_WidthFixed, 70);
+		ImGui::TableSetupColumn("Address", ImGuiTableColumnFlags_WidthFixed, TEXT_BASE_HEIGHT*4);
+		
 		for (int i = 0; i < 16; i++) {
 			sprintf(buf1, "%.2X", (i + header_index));
-			ImGui::TableSetupColumn(buf1, ImGuiTableColumnFlags_WidthFixed, 16);
+			ImGui::TableSetupColumn(buf1, ImGuiTableColumnFlags_WidthFixed, TEXT_BASE_HEIGHT);
 		}
+	
 		//ImGui::TableSetupColumn("EM", ImGuiTableColumnFlags_WidthFixed, 16);
-		for (int i = 0; i < 16; i++) {
-			sprintf(buf2, "%X", (i));
-			ImGui::TableSetupColumn(buf2, ImGuiTableColumnFlags_WidthFixed, 5);
-		}
+		
+			sprintf(buf2, "0123456789ABCDEF");
+			ImGui::TableSetupColumn(buf2, ImGuiTableColumnFlags_WidthFixed, TEXT_BASE_HEIGHT*7);
+		
 
 		//ImGui::TableSetupColumn(buf3, ImGuiTableColumnFlags_None);
 		ImGui::TableHeadersRow();
@@ -137,18 +145,18 @@ void MemoryView::Render()
 				ImGui::TableNextRow();
 
 				ImGui::TableSetColumnIndex(0);
-				ImGui::Text("0x%.8X", addressBase + row * 0x10); // Address section
+				ImGui::Text("0x%.8X", addressBase + (row-1 )* 0x10); // Address section
 				for (int column = 1; column < 17; column++)
 				{
 
 					ImGui::TableSetColumnIndex(column);
 					ImGui::Text("%.2X", virtualMemory[row][column - 1]);
 				}
-				for (int column = 17; column < 33; column++)
+				for (int column = 17; column < 18; column++)
 				{
 
 					ImGui::TableSetColumnIndex(column);
-					ImGui::Text("A", column, row - 1);
+					ImGui::Text("................", column, row - 1);
 				}
 
 			}
@@ -157,12 +165,14 @@ void MemoryView::Render()
 		sprintf(buf2, "%d", clipper.DisplayEnd);
 		sprintf(buf3, "%f", clipper.StartPosY);
 		//std::cout << "Start at = " << clipper.DisplayStart << " End at = " << clipper.DisplayEnd << "Start Pos Y " << clipper.StartPosY << std::endl;
+		CL_CORE_INFO("Start at = {0}", clipper.DisplayStart);
+		CL_CORE_INFO("End at = {0}", clipper.DisplayEnd);
 		if (focus_address)
 			ImGui::SetScrollY(clipper.ItemsHeight * clipper.DisplayStart);
 		focus_address = false;
 		header_index = ((clipper.DisplayStart - 1) * 16) % 0x100;
 		ImGui::EndTable();
 	}
-	//mFont->Scale = 1.0;
-	//ImGui::PopFont();
+
+	ImGui::PopFont();
 }

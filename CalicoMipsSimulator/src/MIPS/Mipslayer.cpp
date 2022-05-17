@@ -199,7 +199,7 @@ namespace MIPSLayer {
 	{
 		m_RegisterUMap["$zero"] = new Register("zero", 0, NULL, registerStatus::free);
 		m_RegisterUMap["$at"] = new Register("at", 1, NULL, registerStatus::free);
-		m_RegisterUMap["&v0"] = new Register("v0", 2, NULL, registerStatus::free);
+		m_RegisterUMap["$v0"] = new Register("v0", 2, NULL, registerStatus::free);
 		m_RegisterUMap["$v1"] = new Register("v1", 3, NULL, registerStatus::free);
 		m_RegisterUMap["$a0"] = new Register("a0", 4, NULL, registerStatus::free);
 		m_RegisterUMap["$a1"] = new Register("a1", 5, NULL, registerStatus::free);

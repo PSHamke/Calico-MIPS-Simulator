@@ -1,5 +1,6 @@
 #pragma once
-
+#include <string>
+#include <algorithm>
 template<typename ... Args>
 std::string string_format(const std::string& format, Args ... args)
 {
@@ -10,11 +11,8 @@ std::string string_format(const std::string& format, Args ... args)
 	std::snprintf(buf.get(), size, format.c_str(), args ...);
 	return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
 }
-bool is_number(const std::string& s)
-{
-	return !s.empty() && std::find_if(s.begin(),
-		s.end(), [](unsigned char c) { return !std::isdigit(c); }) == s.end();
-}
+bool is_number(const std::string& s);
+
 // trim from left
 inline std::string& ltrim(std::string& s, const char* t = " \t\n\r\f\v")
 {

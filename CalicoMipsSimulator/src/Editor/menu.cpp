@@ -5,6 +5,7 @@
 #include "OutputWin.h"
 #include "Log.h"
 #include "MemoryView.h"
+#include "RegisterView.h"
 extern ImFont* Consolas;
 void Menu::Render()
 {
@@ -132,9 +133,8 @@ void Menu::Render()
 			ImGui::Spacing();
 			if (Settings::MemoryViewActive) {
 				Menu::MemoryViewTheme();
-				ImGui::Begin("Calico Memory View", 0, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar);
+				ImGui::Begin("Calico Memory View", 0, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoResize);
 				Menu::TitleBarMemoryView();
-				
 				MemoryView::GetInstance("##MainMemoryView")->Render();
 				//ImGui::Text("works!");
 				ImGui::End();
@@ -142,9 +142,9 @@ void Menu::Render()
 			
 			if (Settings::RegisterViewActive) {
 				Menu::RegisterViewTheme();
-				ImGui::Begin("Calico Register View", 0, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar);
+				ImGui::Begin("Calico Register View", 0, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoResize);
 				Menu::TitleBarRegisterView();
-				ImGui::Text("works!");
+				RegisterView::GetInstance("##MainRegisterView")->Render();
 				ImGui::End();
 			}
 		}
@@ -193,7 +193,7 @@ void Menu::MemoryViewTheme()
 	ImGuiStyle* style = &ImGui::GetStyle();
 	// to do create spec class 
 	float aspectRatio = 16 / 9.f;
-	float width = 600.f;
+	float width = 630.f;
 	float height = width / aspectRatio;
 	//std::cout << height << "\n";
 	style->WindowBorderSize = 0;
@@ -229,7 +229,7 @@ void Menu::RegisterViewTheme()
 	ImGuiStyle* style = &ImGui::GetStyle();
 	// to do create spec class 
 	float aspectRatio = 16 / 12.f;
-	float width = 700.f;
+	float width = 630.f;
 	float height = width / aspectRatio;
 	//std::cout << height << "\n";
 	style->WindowBorderSize = 0;

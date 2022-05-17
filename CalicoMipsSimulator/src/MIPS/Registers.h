@@ -2,6 +2,9 @@
 
 #include <unordered_map>
 #include <string.h>
+
+typedef  std::vector <std::pair <const std::string, const std::string>> RegisterInfos;
+
 enum class registerStatus {
 	free, store, first, second
 };
@@ -28,12 +31,14 @@ public:
 	registerStatus getStatus() {
 		return m_Status;
 	}
+	static RegisterInfos* GetRegisterInfos();
 private:
 	std::string m_Name;
 	uint8_t m_Number;
 	int m_Value;
 	registerStatus m_Status;
 };
+
 
 
 
