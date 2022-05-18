@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include "HelperString.h"
 #include "MipsInfo.h"
+#include "Log.h"
 //-add*, sub*, and*, or* , addi**, andi**, ori**
 //
 //- slt*, slti**, j***, jr*
@@ -86,7 +87,8 @@ namespace MIPSLayer {
 
 	// I Type Instruction Callbacks
 	int addiCallback(int& rs, int& rt, int& immediate) {
-		rt = rs + immediate;
+		rt = rs + immediate;/*
+		CL_CORE_INFO("{0} {1} {2}", rs, rt, immediate);*/
 		return rt;
 	}
 
@@ -340,6 +342,7 @@ namespace MIPSLayer {
 	};
 	std::string MIPS::ITranslateToC(const std::string& aData)
 	{
+
 		static const char* const registerNames[] = {
 			"$t1","$t2"
 		};
@@ -361,6 +364,7 @@ namespace MIPSLayer {
 		std::vector<std::pair<std::string,int>> Lines;
 		std::vector<std::vector<std::string>> Tokens;
 		int lineCounter = 0;
+		Memory::FreeTextMemory();
 		while ((pos = data.find(delimiter)) != std::string::npos) {
 			Lines.push_back(std::make_pair(data.substr(0, pos),lineCounter++));
 			data.erase(0, pos + delimiter.length());
@@ -397,7 +401,7 @@ namespace MIPSLayer {
 			//std::cout << it<<"\n";
 		}
 		std::cout << "Tokens\n";
-		std::vector<std::reference_wrapper<int>> datas;
+		
 		int TokenizedLineCount = 0;
 		unsigned int PC = 0;
 		int shamt = 0;
@@ -406,6 +410,8 @@ namespace MIPSLayer {
 		int errorflag = _ErrorFlag::Error_None;
 		for (auto& it : Tokens) {
 			std::vector<int> expectedArguments;
+			std::vector<std::reference_wrapper<int>> datas;
+			std::vector<int> vecRegisterNames;
 			int expectedArgumentsSize;
 			if (it.empty()) {
 				break;
@@ -459,6 +465,7 @@ namespace MIPSLayer {
 							else if (expectedArguments.at(i - 1) & RegisterInfo(it.at(i))) {
 								std::cout << "Approved ! \n";
 								datas.push_back(m_RegisterUMap[it.at(i)]->getRef());
+								vecRegisterNames.push_back(m_RegisterUMap[it.at(i)]->getNumber());
 								if (special_case) {
 									datas.push_back(special_case);
 								}
@@ -473,7 +480,7 @@ namespace MIPSLayer {
 							if (checkShamt)
 								datas.push_back(shamt);
 
-							m_InstructionUMap[it.at(0)]->Execute(datas, PC);
+							m_InstructionUMap[it.at(0)]->Execute(datas, vecRegisterNames, PC);
 							result = string_format("%s\t%s\n", result.c_str(), createCOutput(it, expectedArguments.size(), m_InstructionUMap[it.at(0)]->getOpcode(), m_InstructionUMap[it.at(0)]->getFunct()).c_str());
 						}
 						else {

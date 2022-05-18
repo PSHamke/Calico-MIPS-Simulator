@@ -9,7 +9,6 @@
 #include "Platform\\DirectX-Win32\imgui_impl_win32.h"
 
 
-
 class Application
 {
 public:

@@ -27,7 +27,12 @@ namespace MIPSLayer {
 		static std::unordered_map<std::string, Register*>& GetRegisterUMap() {
 			return Get().IGet_RegisterUMap();
 		}
-		
+		/*static std::vector<unsigned int>& GetTextMemory() {
+			return Get().IGet_TextMemory();
+		}
+		static void IExecuteWrapper(std::string& instruction, std::vector<std::reference_wrapper<int>>& memory, unsigned int& PC) {
+			Get().IGet_InstructionUMap()[instruction]->Execute(memory, PC);
+		}*/
 	private:
 		
 		MIPS() {
@@ -43,11 +48,13 @@ namespace MIPSLayer {
 		std::unordered_map<std::string, Register*>& IGet_RegisterUMap() {
 			return m_RegisterUMap;
 		}
+		
 		std::string ITranslateToC(const std::string&  data);
 		
 	private:
 		std::unordered_map<std::string, Register*> m_RegisterUMap;
 		std::unordered_map<std::string, Instruction*> m_InstructionUMap;
+		
 	};
 	
 }

@@ -3,7 +3,7 @@
 #include <iostream>
 #include <functional>
 #include <vector>
-
+#include <Memory.h>
 enum class InstructionType {
 	R, I, J
 };
@@ -39,7 +39,7 @@ public:
 	unsigned int getFunct() {
 		return m_Funct;
 	}
-	virtual int Execute(std::vector<std::reference_wrapper<int>>& memory, unsigned int& PC) = 0;
+	virtual int Execute(std::vector<std::reference_wrapper<int>>& memory,std::vector<int>& registerNumber, unsigned int& PC) = 0;
 };
 
 
@@ -56,7 +56,9 @@ private:
 public:
 
 	// rs rt rd shamt 
-	int Execute(std::vector<std::reference_wrapper<int>>& memory, unsigned int& PC) override {
+	int Execute(std::vector<std::reference_wrapper<int>>& memory, std::vector<int>& registerNumber, unsigned int& PC) override {
+		int textMem = this->getOpcode() << 26 | registerNumber[0] << 21 | registerNumber[1] << 16 | registerNumber[2] << 11 | memory[3] << 6 | this->getFunct();
+		Memory::GetTextMemory().push_back(textMem);
 		return m_Functionality(memory[0], memory[1], memory[2], memory[3]);
 	}
 };
@@ -69,7 +71,9 @@ public:
 private:
 	std::function<int(int&, int&, int&)> m_Functionality;
 public:
-	int Execute(std::vector<std::reference_wrapper<int>>& memory, unsigned int& PC) override {
+	int Execute(std::vector<std::reference_wrapper<int>>& memory, std::vector<int>& registerNumber, unsigned int& PC) override {
+		int textMem = this->getOpcode() << 26 | registerNumber[0] << 21 | registerNumber[1] << 16 | memory[2];
+		Memory::GetTextMemory().push_back(textMem);
 		return m_Functionality(memory[0], memory[1], memory[2]);
 	}
 };
@@ -82,8 +86,10 @@ public:
 private:
 	std::function<int(int&)> m_Functionality;
 public:
-	int Execute(std::vector<std::reference_wrapper<int>>& memory, unsigned int& PC) override {
+	int Execute(std::vector<std::reference_wrapper<int>>& memory, std::vector<int>& registerNumber, unsigned int& PC) override {
 		// process for PC
+		int textMem = this->getOpcode() << 26 | memory[0];
+		Memory::GetTextMemory().push_back(textMem);
 		return m_Functionality(memory[0]);
 	}
 };

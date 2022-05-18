@@ -17,20 +17,17 @@ RegisterView::~RegisterView() {
 
 void RegisterView::Render()
 {
-	//ImGui::PushFont(mFont); // Use Regular font maybe ?
 	static ImGuiTableFlags flags = ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV | ImGuiTableFlags_Hideable;
 	float	TEXT_BASE_HEIGHT = ImGui::GetTextLineHeightWithSpacing();
-	int header_index = 0;
 	RegisterInfos *regInfos = Register::GetRegisterInfos();
-	//CL_CORE_WARN ("{0}", regInfos->at(0).first);
-	bool focus_address = true;
-	int address_index = 100;
 	std::string HeaderStr[3] = { "[DEC]", "[HEX]","[BIN]" };
+	int registerValue = 0;
+	ImVec4 activeRegister(0.0f, 0.1f, 1.0f, 1.0f);
+	ImVec4 inactiveRegister(1.0f, 1.0f, 1.0f, 1.0f);
 	
-	ImGuiListClipper clipper;
 	// When using ScrollX or ScrollY we need to specify a size for our table container!
 	// Otherwise by default the table will fit all available space, like a BeginChild() call.
-	//CL_CORE_WARN("Text base = {0}", TEXT_BASE_HEIGHT);
+	
 	ImVec2 outer_size[3] = { ImVec2(320, TEXT_BASE_HEIGHT * 20),
 		ImVec2(340, TEXT_BASE_HEIGHT * 20),
 		ImVec2(610, TEXT_BASE_HEIGHT * 20)
@@ -45,14 +42,12 @@ void RegisterView::Render()
 		
 		ImGui::TableSetupColumn("Number", ImGuiTableColumnFlags_WidthFixed, TEXT_BASE_HEIGHT*5);
 		
-		//ImGui::TableSetupColumn("EM", ImGuiTableColumnFlags_WidthFixed, 16);
-
+		
 		
 		ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthFixed, TEXT_BASE_HEIGHT * 5* (valueState+1));
 		static bool column_selected[3] = {};
 
-		//ImGui::TableSetupColumn(buf3, ImGuiTableColumnFlags_None);
-		//ImGui::TableHeadersRow();
+		
 		ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
 		// A bit spagetti // Find Fix 
 		ImGui::TableSetColumnIndex(0);
@@ -95,18 +90,17 @@ void RegisterView::Render()
 		ImGui::PopID();
 		CL_CORE_INFO("Num = {0}  Value = {1}", numberState, valueState);
 		// Demonstrate using clipper for large vertical lists
-
+		ImGuiListClipper clipper;
 		clipper.Begin(32);
 		while (clipper.Step())
 		{
 			for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; row++)
 			{
+				registerValue = MIPSLayer::MIPS::GetRegisterUMap()[regInfos->at(row).first.c_str()]->getValue();
+				ImGui::PushStyleColor(ImGuiCol_Text,registerValue ? activeRegister : inactiveRegister);
 				ImGui::TableNextRow();
-				if (row <= 0) {
-					//CL_CORE_INFO("Start at = {0}", clipper.DisplayStart);
-				}
 				ImGui::TableSetColumnIndex(0);
-				ImGui::Text("%s", regInfos->at(row).first.c_str()); // Address section
+				ImGui::Text("%s", regInfos->at(row).first.c_str()); // Register name
 				if (ImGui::IsItemHovered())
 					ImGui::SetTooltip("%s", regInfos->at(row).second.c_str());
 				
@@ -123,43 +117,21 @@ void RegisterView::Render()
 				
 				ImGui::TableSetColumnIndex(2);
 				if (valueState == 0) {
-					ImGui::Text("%d", MIPSLayer::MIPS::GetRegisterUMap()[regInfos->at(row).first.c_str()]->getValue());
+					ImGui::Text("%d", registerValue);
 				}
 				else if (valueState == 1) {
-					ImGui::Text("0x%.8X", MIPSLayer::MIPS::GetRegisterUMap()[regInfos->at(row).first.c_str()]->getValue());
+					ImGui::Text("0x%.8X", registerValue);
 				}
 				else if (valueState == 2) {
-					ImGui::Text("0b%s", std::bitset<32> (MIPSLayer::MIPS::GetRegisterUMap()[regInfos->at(row).first.c_str()]->getValue()).to_string().c_str());
+					ImGui::Text("0b%s", std::bitset<32> (registerValue).to_string().c_str());
 				}
-				{
-
-					
-					
-				}/*
-				for (int column = 17; column < 18; column++)
-				{
-
-					ImGui::TableSetColumnIndex(column);
-					ImGui::Text("................", column, row - 1);
-				}*/
-
+				ImGui::PopStyleColor(1);
 			}
 		}
-		/*sprintf("", "%d", clipper.DisplayStart);
-		sprintf(buf2, "%d", clipper.DisplayEnd);
-		sprintf(buf3, "%f", clipper.StartPosY);*/
-		//std::cout << "Start at = " << clipper.DisplayStart << " End at = " << clipper.DisplayEnd << "Start Pos Y " << clipper.StartPosY << std::endl;
-		
-		//CL_CORE_INFO("End at = {0}", clipper.DisplayEnd);
-		if (focus_address)
-			//ImGui::SetScrollY(clipper.ItemsHeight * (clipper.DisplayStart));
-		focus_address = false;
-		header_index = ((clipper.DisplayStart - 1) * 16) % 0x100;
 		ImGui::EndTable();
 	}
 
 	delete regInfos;
-	//ImGui::PopFont();
 }
 
 RegisterView* RegisterView::CreateInstance(const std::string& pInstanceID, unsigned int flag)
