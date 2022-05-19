@@ -90,50 +90,54 @@ std::string MemoryView::GetInstanceId()
 }
 
 
-void MemoryView::Render()
+void MemoryView::RenderHex()
 {
-	
-	
+	char buf1[17];
+	char buf2[17];
+	char buf3[20];
+
 	int addressBase = 0x400000;
+	//CL_CORE_INFO ("Memsize {0}",Memory::GetTextMemory().size());
 	ImGui::PushFont(mFont);
 	static ImGuiTableFlags flags = ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV | ImGuiTableFlags_Hideable;
 	float	TEXT_BASE_HEIGHT = ImGui::GetTextLineHeightWithSpacing();
 
-	
+
 	bool focus_address = true;
 	int address_index = 100;
-	ImGuiListClipper clipper;
+
 	bool isValidMem = false;
 	int result = 0;
-	
+
 	// When using ScrollX or ScrollY we need to specify a size for our table container!
 	// Otherwise by default the table will fit all available space, like a BeginChild() call.
 	//CL_CORE_WARN("Text base = {0}", TEXT_BASE_HEIGHT);
 	ImVec2 outer_size = ImVec2(630, TEXT_BASE_HEIGHT * 20);
 	ImVec4 activeMemory(0.0f, 0.1f, 1.0f, 1.0f);
 	ImVec4 inactiveMemory(1.0f, 1.0f, 1.0f, 1.0f);
-	if (ImGui::BeginTable("table_scrolly", 18, flags,outer_size))
+	//ImGui::SetCursorPos(ImVec2((ImGui::GetWindowWidth() - outer_size.x)/2, 70));
+	if (ImGui::BeginTable("table_scrolly", 18, flags, outer_size))
 	{
 
 		ImGui::TableSetupScrollFreeze(0, 1); // Make top row always visible
-		ImGui::TableSetupColumn("Address", ImGuiTableColumnFlags_WidthFixed, TEXT_BASE_HEIGHT*4);
-		
+		ImGui::TableSetupColumn("Address", ImGuiTableColumnFlags_WidthFixed, TEXT_BASE_HEIGHT * 4);
+
 		for (int i = 0; i < 16; i++) {
 			sprintf(buf1, "%.2X", (i + header_index));
 			ImGui::TableSetupColumn(buf1, ImGuiTableColumnFlags_WidthFixed, TEXT_BASE_HEIGHT);
 		}
-	
+
 		//ImGui::TableSetupColumn("EM", ImGuiTableColumnFlags_WidthFixed, 16);
-		
-			sprintf(buf2, "0123456789ABCDEF");
-			ImGui::TableSetupColumn(buf2, ImGuiTableColumnFlags_WidthFixed, TEXT_BASE_HEIGHT*7);
-		
+
+		sprintf(buf2, "0123456789ABCDEF");
+		ImGui::TableSetupColumn(buf2, ImGuiTableColumnFlags_WidthFixed, TEXT_BASE_HEIGHT * 7);
+
 
 		//ImGui::TableSetupColumn(buf3, ImGuiTableColumnFlags_None);
 		ImGui::TableHeadersRow();
 
 		// Demonstrate using clipper for large vertical lists
-
+		ImGuiListClipper clipper;
 		clipper.Begin(1000);
 		while (clipper.Step())
 		{
@@ -142,21 +146,21 @@ void MemoryView::Render()
 				std::string ASCIIstr = "";
 				ImGui::TableNextRow();
 				ImGui::TableSetColumnIndex(0);
-				ImGui::Text("0x%.8X", addressBase + (row)* 0x10); // Address section
+				ImGui::Text("0x%.8X", addressBase + (row) * 0x10); // Address section
 				for (int column = 1; column < 17; column++)
 				{
 					ImGui::TableSetColumnIndex(column);
-					result = Memory::HandleTextMemory(row, column, isValidMem);
-					
+					result = Memory::HandleTextMemoryByte(row, column, isValidMem);
+
 					ImGui::PushStyleColor(ImGuiCol_Text, isValidMem ? activeMemory : inactiveMemory);
 					ImGui::Text("%.2X", isValidMem ? result : 0);
 					ImGui::PopStyleColor();
-					ASCIIstr += isValidMem && (char)result>=32 ? (char)result : '.';
+					ASCIIstr += isValidMem && (char)result >= 32 ? (char)result : '.';
 				}
-				
-					ImGui::TableSetColumnIndex(17);
-					ImGui::Text("%s", ASCIIstr.c_str());
-				
+
+				ImGui::TableSetColumnIndex(17);
+				ImGui::Text("%s", ASCIIstr.c_str());
+
 			}
 		}
 
@@ -165,10 +169,97 @@ void MemoryView::Render()
 		//CL_CORE_INFO("End at = {0}", clipper.DisplayEnd);
 		/*if (focus_address) // disable for now do more research !
 			ImGui::SetScrollY(clipper.ItemsHeight * clipper.DisplayStart);*/
-		focus_address = false;
 		header_index = ((clipper.DisplayStart - 1) * 16) % 0x100;
 		ImGui::EndTable();
 	}
 
 	ImGui::PopFont();
+}
+
+void MemoryView::RenderBinary()
+{
+	
+		char buf1[17];
+		char buf2[17];
+		char buf3[20];
+
+		int addressBase = 0x400000;
+		//CL_CORE_INFO ("Memsize {0}",Memory::GetTextMemory().size());
+		ImGui::PushFont(mFont);
+		static ImGuiTableFlags flags = ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV | ImGuiTableFlags_Hideable;
+		float	TEXT_BASE_HEIGHT = ImGui::GetTextLineHeightWithSpacing();
+
+
+		bool focus_address = true;
+		int address_index = 100;
+
+		bool isValidMem = false;
+		int result = 0;
+
+		// When using ScrollX or ScrollY we need to specify a size for our table container!
+		// Otherwise by default the table will fit all available space, like a BeginChild() call.
+		//CL_CORE_WARN("Text base = {0}", TEXT_BASE_HEIGHT);
+		ImVec2 outer_size = ImVec2(985, TEXT_BASE_HEIGHT * 20);
+		ImVec4 activeMemory(0.0f, 0.1f, 1.0f, 1.0f);
+		ImVec4 inactiveMemory(1.0f, 1.0f, 1.0f, 1.0f);
+		if (ImGui::BeginTable("table_scrolly", 34, flags, outer_size))
+		{
+
+			ImGui::TableSetupScrollFreeze(0, 1); // Make top row always visible
+			ImGui::TableSetupColumn("Address", ImGuiTableColumnFlags_WidthFixed, TEXT_BASE_HEIGHT * 4);
+
+			for (int i = 0; i < 32; i++) {
+				sprintf(buf1, "%.2X", (31-i));
+				ImGui::TableSetupColumn(buf1, ImGuiTableColumnFlags_WidthFixed, TEXT_BASE_HEIGHT);
+			}
+
+			//ImGui::TableSetupColumn("EM", ImGuiTableColumnFlags_WidthFixed, 16);
+
+			sprintf(buf2, "ASCII");
+			ImGui::TableSetupColumn(buf2, ImGuiTableColumnFlags_WidthFixed, TEXT_BASE_HEIGHT * 7);
+
+
+			//ImGui::TableSetupColumn(buf3, ImGuiTableColumnFlags_None);
+			ImGui::TableHeadersRow();
+
+			// Demonstrate using clipper for large vertical lists
+			ImGuiListClipper clipper;
+			clipper.Begin(1000);
+			while (clipper.Step())
+			{
+				for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; row++)
+				{
+					std::string ASCIIstr = "";
+					ImGui::TableNextRow();
+					ImGui::TableSetColumnIndex(0);
+					ImGui::Text("0x%.8X", addressBase + (row) * 0x4); // Address section
+					for (int column = 1; column < 33; column++)
+					{
+						ImGui::TableSetColumnIndex(column);
+						result = Memory::HandleTextMemoryBit(row, 32-column, isValidMem);
+
+						ImGui::PushStyleColor(ImGuiCol_Text, isValidMem ? activeMemory : inactiveMemory);
+						ImGui::Text(" %X", isValidMem ? result : 0);
+						ImGui::PopStyleColor();
+						ASCIIstr += isValidMem && (char)result >= 32 ? (char)result : '.';
+					}
+
+					ImGui::TableSetColumnIndex(33);
+					ImGui::Text("%s", Memory::GetAscii(row));
+
+				}
+			}
+
+			
+			ImGui::EndTable();
+		}
+
+		ImGui::PopFont();
+	
+}
+
+void MemoryView::Render(RenderType type)
+{
+	type == RenderType::Hex ? RenderHex() : RenderBinary();
+	return;
 }

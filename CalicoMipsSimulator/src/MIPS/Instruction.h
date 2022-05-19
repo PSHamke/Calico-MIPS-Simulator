@@ -72,7 +72,8 @@ private:
 	std::function<int(int&, int&, int&)> m_Functionality;
 public:
 	int Execute(std::vector<std::reference_wrapper<int>>& memory, std::vector<int>& registerNumber, unsigned int& PC) override {
-		int textMem = this->getOpcode() << 26 | registerNumber[0] << 21 | registerNumber[1] << 16 | memory[2];
+		unsigned int textMem = this->getOpcode() << 26 | registerNumber[0] << 21 | registerNumber[1] << 16 | memory[2];
+
 		Memory::GetTextMemory().push_back(textMem);
 		return m_Functionality(memory[0], memory[1], memory[2]);
 	}

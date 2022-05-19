@@ -4,11 +4,15 @@
 #include <vector>
 class MemoryView {
 public:
-
+	enum class RenderType {
+		Hex,
+		Bin
+	};
+	
 	// Make it singleton
 	MemoryView();
 	~MemoryView();
-	void Render();
+	void Render(RenderType type);
 
 	static MemoryView* CreateInstance(const std::string& pInstanceID, unsigned int flag = 0);
 	static MemoryView* GetInstance(const std::string& pInstanceID);
@@ -24,4 +28,7 @@ private:
 	std::string mInstanceId;
 	int mFlag;
 	ImFont* mFont;
+	
+	void RenderHex();
+	void RenderBinary();
 };

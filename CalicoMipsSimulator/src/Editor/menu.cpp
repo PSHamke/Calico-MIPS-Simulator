@@ -1,11 +1,12 @@
 #include "menu.h"
-#include "settings.h"
 #include "imguipp.h"
 #include "icons.h"
 #include "OutputWin.h"
 #include "Log.h"
 #include "MemoryView.h"
 #include "RegisterView.h"
+#include "HelperString.h"
+#include "settings.h"
 extern ImFont* Consolas;
 void Menu::Render()
 {
@@ -134,8 +135,15 @@ void Menu::Render()
 			if (Settings::MemoryViewActive) {
 				Menu::MemoryViewTheme();
 				ImGui::Begin("Calico Memory View", 0, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoResize);
+				if (Settings::MemoryViewType == 1) {
+
+					ImGui::SetWindowSize(ImVec2(1000, 390)); // Bin
+				}
+				else {
+					ImGui::SetWindowSize(ImVec2(645, 390)); // Arrange Window Size
+				}
 				Menu::TitleBarMemoryView();
-				MemoryView::GetInstance("##MainMemoryView")->Render();
+				MemoryView::GetInstance("##MainMemoryView")->Render(Settings::MemoryViewType ?  MemoryView::RenderType::Bin : MemoryView::RenderType::Hex );
 				//ImGui::Text("works!");
 				ImGui::End();
 			}
@@ -193,14 +201,15 @@ void Menu::MemoryViewTheme()
 	ImGuiStyle* style = &ImGui::GetStyle();
 	// to do create spec class 
 	float aspectRatio = 16 / 9.f;
-	float width = 630.f;
-	float height = width / aspectRatio;
-	//std::cout << height << "\n";
+	float width =  645.f;
+	float height = 390;
+	CL_CORE_INFO("W = {0} H = {1}", width, height);
+	
 	style->WindowBorderSize = 0;
 	style->WindowTitleAlign = ImVec2(0.5, 0.5);
 	style->WindowMinSize = ImVec2(width, height);
 	style->FramePadding = ImVec2(8, 6);
-
+	
 	style->Colors[ImGuiCol_TitleBg] = ImColor(107, 3, 252, 255);
 	style->Colors[ImGuiCol_TitleBgActive] = ImColor(54, 194, 164, 125);
 	style->Colors[ImGuiCol_TitleBgCollapsed] = ImColor(34, 16, 54, 130);
@@ -286,6 +295,7 @@ void Menu::TitleBar(MSG& msg) {
 	}
 }
 void Menu::TitleBarMemoryView() {
+	const char* viewType[2] = { "HEX", "BIN" };
 	if (ImGui::BeginMenuBar())
 	{
 		if (ImGui::BeginMenu("Menu"))
@@ -303,7 +313,9 @@ void Menu::TitleBarMemoryView() {
 
 		ImGui::PopStyleColor(3);
 		ImGui::SetCursorPosX((ImGui::GetWindowWidth() / 2)- 80);
-		ImGui::Text(" MemoryView 0xh", ImVec2(0, 0));
+		if (ImGui::Button(string_format("MemoryView [%s]",viewType[Settings::MemoryViewType]).c_str(), ImVec2(0, 0))) {
+			Settings::MemoryViewType = (Settings::MemoryViewType+1) %2;
+		}
 			
 		
 		ImGui::EndMenuBar();
