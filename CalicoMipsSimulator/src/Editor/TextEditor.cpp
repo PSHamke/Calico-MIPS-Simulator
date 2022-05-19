@@ -1430,7 +1430,7 @@ void TextEditor::EnterCharacter(ImWchar aChar, bool aShift)
 		u.mAdded = (char)aChar;
 		if (mInstanceId == "##MainEditor") {
 			CL_CORE_INFO("##Main");
-			TextEditor::GetInstance("##COutputEditor")->SetText(MIPSLayer::MIPS::TranslateToC(GetText())); // Turn into C code 
+			TextEditor::GetInstance("##COutputEditor")->SetText(MIPSLayer::MIPS::TranslateToC(GetText(), TextEditor::GetInstance("##DataEditor")->GetText(),1)); // Turn into C code 
 		}
 		else if (mInstanceId == "##DataEditor") {
 			ErrorMarkers& error1 = (ErrorMarkers) MIPSLayer::DataMemoryHandler(GetText());

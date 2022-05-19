@@ -376,22 +376,9 @@ namespace MIPSLayer {
 		DataMemory_Too_Few_Args = BIT(8),
 		DataMemory_Invalid_Arg = BIT(9),
 	};
-	std::string MIPS::ITranslateToC(const std::string& aData)
+	std::string MIPS::ITranslateToC(const std::string& aData, const std::string& memData, int callReason )
 	{
 
-		static const char* const registerNames[] = {
-			"$t1","$t2"
-		};
-		
-		//-add*, sub*, and*, or* , addi**, andi**, ori**
-		//
-		//- slt*, slti**, j***, jr*
-		//
-		//- jal***, sll*, srl*, beq**, bne**
-		//
-		//- mul?, muli?, lui**
-		//
-		//- lw**, sw**, lb**, sb**
 		std::string result = "";
 		std::string delimiter = "\n";
 		std::string data = aData;
@@ -400,8 +387,14 @@ namespace MIPSLayer {
 		std::vector<std::pair<std::string,int>> Lines;
 		std::vector<std::vector<std::string>> Tokens;
 		int lineCounter = 0;
-		Memory::FreeTextMemory();
-		IResetRegisterUMap();
+		
+		if (callReason) {
+			Memory::FreeTextMemory();
+			IResetRegisterUMap();
+			Memory::FreeDataMemory();
+			DataMemoryHandler(memData);
+		}
+		
 		while ((pos = data.find(delimiter)) != std::string::npos) {
 			Lines.push_back(std::make_pair(data.substr(0, pos),lineCounter++));
 			data.erase(0, pos + delimiter.length());
@@ -454,7 +447,7 @@ namespace MIPSLayer {
 			if (it.empty()) {
 				break;
 			}
-			if (TokenizedLineCount == 0) {
+			if (TokenizedLineCount == 0 && callReason) {
 				if (isSegmentInstruction(it.at(0))) {
 					result = string_format("%sint main (void) { \n", result.c_str());
 				}
@@ -529,9 +522,9 @@ namespace MIPSLayer {
 						for (; i <= expectedArgumentsSize; i++) {
 							if (expectedArguments.at(i - 1) & Special_Constant || expectedArguments.at(i - 1) & Special_Negligible) {
 								if (is_number(it.at(i))) {
-									int immediate = atoi(it.at(i).c_str());
+									int immediate = (atoi(it.at(i).c_str()));
 									std::cout << "Approved ! Number \n";
-									datas.push_back(immediate);
+									datas.push_back((immediate));
 								}
 								else {
 									errorflag |= _ErrorFlag::Numeric_Value;
@@ -560,6 +553,13 @@ namespace MIPSLayer {
 								datas.push_back(shamt);
 
 							m_InstructionUMap[it.at(0)]->Execute(datas, vecRegisterNames, PC);
+							ExecutionTable temp;
+							temp.address = TokenizedLineCount;
+							temp.datas = datas;
+							CL_CORE_INFO("Data here {0}", datas[2]);
+							temp.instruction = it.at(0);
+							temp.registerNames = vecRegisterNames;
+							m_ExecutionTable.emplace_back(temp);
 							result = string_format("%s\t%s\n", result.c_str(), createCOutput(it, expectedArguments.size(), m_InstructionUMap[it.at(0)]->getOpcode(), m_InstructionUMap[it.at(0)]->getFunct()).c_str());
 						}
 						else {
@@ -599,6 +599,7 @@ namespace MIPSLayer {
 			
 		if(~(errorflag & _ErrorFlag::Segment_Start))
 			result = string_format("%s\t%s\n}", result.c_str(), "return 0;");
+		CL_CORE_WARN(result);
 		return result;
 	}
 	
@@ -690,16 +691,44 @@ namespace MIPSLayer {
 			}
 			
 		}
-		//CL_CORE_WARN("Result map = {}", resultMap[tokens.at(0).second + 1]);
+		
 		return resultMap;
 	}
 	
 	
-	std::string MIPS::Execute()
+	void MIPS::IExecute(const std::string& dataMem, const std::string& textMem)
 	{
-		for (auto i = m_ExecutionTable.begin(); i != m_ExecutionTable.end(); i++) {
-			
+		CL_CORE_INFO("Initial Data {}", dataMem);
+		
+		unsigned int PC = 0;
+		unsigned int vecSize = m_ExecutionTable.size();
+		Memory::FreeTextMemory();
+		IResetRegisterUMap();
+		std::vector<std::pair<std::string, int>> Lines;
+		std::string delimiter = "\n";
+		std::string aData = dataMem;
+		int lineCounter = 0;
+		size_t pos = 0;
+		while ((pos = aData.find(delimiter)) != std::string::npos) {
+			Lines.push_back(std::make_pair(aData.substr(0, pos), lineCounter++));
+			aData.erase(0, pos + delimiter.length());
+
 		}
+		if (aData != "") {
+			Lines.push_back(std::make_pair(aData.substr(0, pos), lineCounter++));
+		}
+
+
+		for (auto& it : Lines) {
+			CL_CORE_WARN(it.first);
+			TranslateToC(it.first, dataMem, 0);
+		}
+
+
+		
+		
+		
+
 	}
 	
 }

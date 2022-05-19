@@ -59,6 +59,7 @@ public:
 	int Execute(std::vector<std::reference_wrapper<int>>& memory, std::vector<int>& registerNumber, unsigned int& PC) override {
 		int textMem = this->getOpcode() << 26 | registerNumber[0] << 21 | registerNumber[1] << 16 | registerNumber[2] << 11 | memory[3] << 6 | this->getFunct();
 		Memory::GetTextMemory().push_back(textMem);
+		PC += 1;		
 		return m_Functionality(memory[0], memory[1], memory[2], memory[3]);
 	}
 };
@@ -79,7 +80,7 @@ public:
 		else {
 			textMem = this->getOpcode() << 26 | registerNumber[0] << 21  | memory[2];
 		}
-
+		PC += 1;
 		
 		Memory::GetTextMemory().push_back(textMem);
 		return m_Functionality(memory[0], memory[1], memory[2]);

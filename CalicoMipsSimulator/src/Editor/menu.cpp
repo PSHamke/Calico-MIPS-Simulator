@@ -7,6 +7,7 @@
 #include "RegisterView.h"
 #include "HelperString.h"
 #include "settings.h"
+#include "MipsLayer.h"
 extern ImFont* Consolas;
 void Menu::Render()
 {
@@ -42,7 +43,8 @@ void Menu::Render()
 			
 			
 			if (ImGui::Button(ICON_FA_CHECK" Execute", ImVec2(115, 34))) {
-				TextEditor::GetInstance("##OutputEditor")->SetText("Executed!");
+				MIPSLayer::MIPS::Execute(TextEditor::GetInstance("##MainEditor")->GetText(), TextEditor::GetInstance("##DataEditor")->GetText());
+				CL_CORE_INFO("Called!");
 			}
 			ImGui::SameLine();
 			ImGui::SetCursorPosX(ImGui::GetCursorPosX() +imguipp::getx()-145); // Set Stop button place
