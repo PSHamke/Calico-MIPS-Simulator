@@ -1,8 +1,11 @@
 #pragma once
 #include <vector>
 #include "Log.h"
+#include "unordered_map"
 class Memory {
 public:
+	typedef std::pair<std::string, int> MemoryRegion;
+	
 	Memory(const Memory&) = delete;
 
 	static Memory& Get() {
@@ -21,24 +24,46 @@ public:
 	static std::vector <int >& GetTextMemory() {
 		return Get().IGetTextMemory();
 	}
-	static std::vector <int >& GetDataMemory() {
+	static std::unordered_map < unsigned int, MemoryRegion>& GetDataMemory() {
 		return Get().IGetDataMemory();
 	}
 
-	static int HandleTextMemoryByte(unsigned int mCurrentMemoryRow, unsigned int mCurrentMemoryCol, bool& mIsValid) {
-		return Get().IHandleTextMemoryByte(mCurrentMemoryRow, mCurrentMemoryCol, mIsValid);
+	static int HandleMemoryByte(unsigned int aCurrentMemoryRow, unsigned int aCurrentMemoryCol,unsigned int aMemoryType, bool& aIsValid) {
+		if (aMemoryType == 0) { // Text Memory
+			return Get().IHandleTextMemoryByte(aCurrentMemoryRow, aCurrentMemoryCol, aIsValid);
+		}
+		else {
+			return Get().IHandleDataMemoryByte(aCurrentMemoryRow, aCurrentMemoryCol, aIsValid);
+		}
+			
 	}
-	static int HandleTextMemoryBit(unsigned int mCurrentMemoryRow, unsigned int mCurrentMemoryCol, bool& mIsValid) {
-		return Get().IHandleTextMemoryBit(mCurrentMemoryRow, mCurrentMemoryCol, mIsValid);
+	static int HandleMemoryBit(unsigned int aCurrentMemoryRow, unsigned int aCurrentMemoryCol,unsigned int aMemoryType, bool& aIsValid) {
+		if (aMemoryType == 0) { // Text Memory
+			return Get().IHandleTextMemoryBit(aCurrentMemoryRow, aCurrentMemoryCol, aIsValid);
+		}
+		else {
+			return Get().IHandleDataMemoryBit(aCurrentMemoryRow, aCurrentMemoryCol, aIsValid);
+		}
+		
 	}
-	static int HandleDataMemory(unsigned int mMemoryRow, unsigned int mMemoryCol) {
-		return Get().IHandleDataMemory(mMemoryRow, mMemoryCol);
+	static int HandleDataMemory(unsigned int address,unsigned int n, bool& check)  {
+		return Get().IHandleDataMemoryByte(address,n,check);
 	}
+	static bool DataMemoryInsert(std::string label, int value, unsigned int address) {
+		return Get().IDataMemoryInsert(label, value, address);
+	}
+	static int GetDataMemoryValue(unsigned int address, bool &check) {
+		return Get().IGetDataMemoryValue(address, check);
+	}
+		
+	
 	static const char* GetAscii(unsigned int mMemoryRow) {
 		return Get().IGetAscii(mMemoryRow);
 	}
 
 private:
+	
+
 
 	Memory() {
 
@@ -50,13 +75,52 @@ private:
 	void IFreeDataMemory() {
 		m_DataMemory.clear();
 	}
-	int IHandleDataMemory(unsigned int mMemoryRow, unsigned int mMemoryColumn) {
-
+	int IHandleDataMemoryByte(unsigned int aCurrentMemoryRow, unsigned int  aCurrentMemoryCol, bool& aIsValid) {
+		int address = (aCurrentMemoryRow * 4 + (aCurrentMemoryCol - 1) / 4);
+		if (m_DataMemory.find(address) != m_DataMemory.end()) {
+			aIsValid = true;
+			return IGetnThByte(m_DataMemory[address].second, (aCurrentMemoryCol - 1) % 4) ;
+		}
+		else {
+			aIsValid = false;
+			return 0;
+		}
+		
+	}
+	int IHandleDataMemoryBit(unsigned int aCurrentMemoryRow, unsigned int  aCurrentMemoryCol, bool& aIsValid) {
+		int address = aCurrentMemoryRow;
+		if (m_DataMemory.find(address) != m_DataMemory.end()) {
+			aIsValid = true;
+			return IGetnThBit(m_DataMemory[address].second, (aCurrentMemoryCol) % 32);
+		}
+		else {
+			aIsValid = false;
+			return 0;
+		}
+	}
+	int IGetDataMemoryValue(unsigned int address, bool &check){
+		if (m_DataMemory.find(address) != m_DataMemory.end()) {
+			check = true;
+			return m_DataMemory[address].second;
+		}
+		else {
+			check = false;
+			return 0;
+		}
+	}
+	int IDataMemoryInsert(std::string label, int value, unsigned int address) {
+		if (m_DataMemory.find(address) != m_DataMemory.end()) {
+			return false;
+		}
+		else {
+			m_DataMemory[address] = std::make_pair(label,value);
+			return true;
+		}
 	}
 	int IHandleTextMemoryByte(unsigned int mCurrentMemoryRow, unsigned int  mCurrentMemoryCol, bool &mIsValid) {
 		if ((mCurrentMemoryRow * 4 + (mCurrentMemoryCol - 1) / 4) < m_TextMemory.size()) {
 			mIsValid = true;
-			return IGetnThByte(m_TextMemory.at((int)(mCurrentMemoryRow * 16 + mCurrentMemoryCol - 1) / 4), (mCurrentMemoryCol - 1) % 4);
+			return IGetnThByte(m_TextMemory.at((int)(mCurrentMemoryRow * 4 + mCurrentMemoryCol - 1) / 4), (mCurrentMemoryCol - 1) % 4);
 			
 		}
 		mIsValid = false;
@@ -91,11 +155,12 @@ private:
 		return m_TextMemory;
 	}
 
-	std::vector <int >& IGetDataMemory() {
+	std::unordered_map <unsigned int, MemoryRegion>& IGetDataMemory() {
 		return m_DataMemory;
 	}
 private:
 	
 	std::vector <int> m_TextMemory;
-	std::vector <int> m_DataMemory;
+	std::unordered_map <unsigned int, MemoryRegion> m_DataMemory;
+	
 };

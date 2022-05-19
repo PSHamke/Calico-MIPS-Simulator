@@ -74,19 +74,19 @@ namespace MIPSLayer {
 		Special_Constant | Reg_Constant_Value}},
 
 		{"lw",{ Reg_Expression_Evaluation | Reg_Arguments | Reg_Temporaries | Reg_SavedTemporaries | Reg_ExtraTemporaries,
-		Special_Constant | Reg_Constant_Value,
+		Special_Paranthesis|Special_Constant | Reg_Constant_Value,
 		Reg_Expression_Evaluation | Reg_Arguments | Reg_Temporaries | Reg_SavedTemporaries | Reg_ExtraTemporaries | Reg_Constant_Value}},
 
 		{"sw",{ Reg_Expression_Evaluation | Reg_Arguments | Reg_Temporaries | Reg_SavedTemporaries | Reg_ExtraTemporaries,
-		Special_Constant | Reg_Constant_Value,
+		Special_Paranthesis | Special_Constant | Reg_Constant_Value,
 		Reg_Expression_Evaluation | Reg_Arguments | Reg_Temporaries | Reg_SavedTemporaries | Reg_ExtraTemporaries | Reg_Constant_Value}},
 
 		{"lb",{ Reg_Expression_Evaluation | Reg_Arguments | Reg_Temporaries | Reg_SavedTemporaries | Reg_ExtraTemporaries,
-		Special_Constant | Reg_Constant_Value,
+		Special_Paranthesis | Special_Constant | Reg_Constant_Value,
 		Reg_Expression_Evaluation | Reg_Arguments | Reg_Temporaries | Reg_SavedTemporaries | Reg_ExtraTemporaries | Reg_Constant_Value}},
 
 		{"sb",{ Reg_Expression_Evaluation | Reg_Arguments | Reg_Temporaries | Reg_SavedTemporaries | Reg_ExtraTemporaries,
-		Special_Constant | Reg_Constant_Value,
+		Special_Paranthesis | Special_Constant | Reg_Constant_Value,
 		Reg_Expression_Evaluation | Reg_Arguments | Reg_Temporaries | Reg_SavedTemporaries | Reg_ExtraTemporaries | Reg_Constant_Value}},
 
 		// J Type jumps

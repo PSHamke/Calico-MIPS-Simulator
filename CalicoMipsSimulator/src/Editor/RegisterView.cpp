@@ -32,6 +32,7 @@ void RegisterView::Render()
 		ImVec2(340, TEXT_BASE_HEIGHT * 20),
 		ImVec2(610, TEXT_BASE_HEIGHT * 20)
 	};
+	
 	ImGui::SetCursorPosX(( ImGui::GetWindowWidth()- outer_size[valueState].x) /2);
 	if (ImGui::BeginTable("table_scrolly", 3, flags, outer_size[valueState]))
 	{

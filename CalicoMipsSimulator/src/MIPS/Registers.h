@@ -25,6 +25,9 @@ public:
 	int getValue() {
 		return m_Value;
 	}
+	void SetValue(int value) {
+		m_Value = value;
+	}
 	std::reference_wrapper<int> getRef() {
 		return std::reference_wrapper<int>(m_Value);
 	}

@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
 #include <algorithm>
+#include <regex>
+#include "Log.h"
 template<typename ... Args>
 std::string string_format(const std::string& format, Args ... args)
 {
@@ -56,4 +58,55 @@ inline std::string& charCheck(std::string& s, bool& check, char t = ',') {
 
 	check = actualSize == s.length();
 	return s;
+}
+
+inline int AnalyzeString(std::string& data, bool& check) {
+	
+	enum NumericType {
+		None,
+		HEX,
+		BIN,
+		DEC,
+		OCT,
+		UNKNOWN
+	};
+	trim(data);
+	std::vector < std::pair<std::regex, NumericType>> reg_regex;
+	reg_regex.push_back(std::make_pair(std::regex("0[xX][0-9a-fA-F]+[uU]?[lL]?[lL]?"), NumericType::HEX));
+	reg_regex.push_back(std::make_pair(std::regex("0[bB][0-1]+[uU]?[lL]?[lL]?"), NumericType::BIN));
+	reg_regex.push_back(std::make_pair(std::regex("[+-]?[0-9]+[Uu]?[lL]?[lL]?"), NumericType::DEC));
+	
+
+	NumericType  mType = None;
+	
+	for (auto& reg : reg_regex) {
+		std::smatch match;
+		if (std::regex_match(data, match, reg.first)) {
+			check = true;
+			mType = reg.second;
+
+		}
+	}
+	if (check) {
+		switch (mType) {
+		case None:
+			CL_CORE_INFO ("None type error");
+			return 0;
+			break;
+		case HEX:
+			return std::stol(data, nullptr, 16);
+			break;
+		case BIN:
+			data.erase(0, 2);
+			return std::stol(data, nullptr, 2);
+			break;
+		case DEC:
+			return std::stol(data);
+			break;
+		default:
+			return 0;
+			break;
+		}
+	}
+	return 0;
 }

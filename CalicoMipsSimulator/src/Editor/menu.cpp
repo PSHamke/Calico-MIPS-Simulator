@@ -133,6 +133,7 @@ void Menu::Render()
 			ImGui::PopStyleVar();
 			ImGui::Spacing();
 			if (Settings::MemoryViewActive) {
+			
 				Menu::MemoryViewTheme();
 				ImGui::Begin("Calico Memory View", 0, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoResize);
 				if (Settings::MemoryViewType == 1) {
@@ -143,8 +144,12 @@ void Menu::Render()
 					ImGui::SetWindowSize(ImVec2(645, 390)); // Arrange Window Size
 				}
 				Menu::TitleBarMemoryView();
-				MemoryView::GetInstance("##MainMemoryView")->Render(Settings::MemoryViewType ?  MemoryView::RenderType::Bin : MemoryView::RenderType::Hex );
+				MemoryView::GetInstance("##MainMemoryView")->Render(
+					Settings::MemoryViewType ?  MemoryView::RenderType::Bin : MemoryView::RenderType::Hex,
+					Settings::MemoryKind ? MemoryView::MemoryType::Data : MemoryView::MemoryType::Text
+				);
 				//ImGui::Text("works!");
+				
 				ImGui::End();
 			}
 			
@@ -203,7 +208,7 @@ void Menu::MemoryViewTheme()
 	float aspectRatio = 16 / 9.f;
 	float width =  645.f;
 	float height = 390;
-	CL_CORE_INFO("W = {0} H = {1}", width, height);
+	//CL_CORE_INFO("W = {0} H = {1}", width, height);
 	
 	style->WindowBorderSize = 0;
 	style->WindowTitleAlign = ImVec2(0.5, 0.5);
@@ -296,12 +301,14 @@ void Menu::TitleBar(MSG& msg) {
 }
 void Menu::TitleBarMemoryView() {
 	const char* viewType[2] = { "HEX", "BIN" };
+	const char* memoryTypes[2] = { "TEXT MEMORY","DATA MEMORY" };
 	if (ImGui::BeginMenuBar())
 	{
-		if (ImGui::BeginMenu("Menu"))
-		{
-			ImGui::EndMenu();
+		if (ImGui::Button(memoryTypes[Settings::MemoryKind], ImVec2(0, 0))) {
+			Settings::MemoryKind = (Settings::MemoryKind + 1) % 2;
+			CL_CORE_INFO("Button press {0}", Settings::MemoryKind);
 		}
+		
 		ImGui::SetCursorPosX(ImGui::GetWindowWidth() - 30);
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.1, 0.3, 0.2, 1));
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.1, 0.3, 0.2, 1));

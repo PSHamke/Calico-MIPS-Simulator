@@ -8,11 +8,14 @@ public:
 		Hex,
 		Bin
 	};
-	
+	enum class MemoryType {
+		Text,
+		Data
+	};
 	// Make it singleton
 	MemoryView();
 	~MemoryView();
-	void Render(RenderType type);
+	void Render(RenderType rType, MemoryType mType );
 
 	static MemoryView* CreateInstance(const std::string& pInstanceID, unsigned int flag = 0);
 	static MemoryView* GetInstance(const std::string& pInstanceID);
@@ -22,13 +25,16 @@ public:
 	static bool FreeAllInstances();
 	bool SetInstanceId(const std::string& const pInstanceID);
 	void SetFont(ImFont* font);
+	void SetMemoryType(MemoryType);
+	MemoryType GetMemoryType();
+	ImFont* GetFont();
 	void SetFlag(unsigned int flag);
 	std::string GetInstanceId();
 private:
 	std::string mInstanceId;
 	int mFlag;
 	ImFont* mFont;
-	
+	MemoryType mType;
 	void RenderHex();
 	void RenderBinary();
 };

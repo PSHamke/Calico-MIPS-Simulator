@@ -1,6 +1,7 @@
 #include "MemoryView.h"
 #include "Log.h"
 #include "Memory.h"
+#include "settings.h"
 std::vector<MemoryView*> MemoryView::Instances;
 int header_index = 0;
 MemoryView::MemoryView() {
@@ -64,6 +65,17 @@ void MemoryView::SetFont(ImFont* font)
 	mFont = font;
 }
 
+void MemoryView::SetMemoryType(MemoryType type)
+{
+	mType = type;
+}
+
+
+MemoryView::MemoryType MemoryView::GetMemoryType()
+{
+	return mType;
+}
+
 void MemoryView::SetFlag(unsigned int flag)
 {
 
@@ -89,19 +101,20 @@ std::string MemoryView::GetInstanceId()
 	return this->mInstanceId;
 }
 
-
+ImFont* MemoryView::GetFont() {
+	return mFont;
+}
 void MemoryView::RenderHex()
 {
 	char buf1[17];
 	char buf2[17];
 	char buf3[20];
 
-	int addressBase = 0x400000;
-	//CL_CORE_INFO ("Memsize {0}",Memory::GetTextMemory().size());
+	int addressBase = GetMemoryType() == MemoryType::Text ?  0x400000 : 0x1001000;
+	
 	ImGui::PushFont(mFont);
 	static ImGuiTableFlags flags = ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV | ImGuiTableFlags_Hideable;
 	float	TEXT_BASE_HEIGHT = ImGui::GetTextLineHeightWithSpacing();
-
 
 	bool focus_address = true;
 	int address_index = 100;
@@ -150,12 +163,14 @@ void MemoryView::RenderHex()
 				for (int column = 1; column < 17; column++)
 				{
 					ImGui::TableSetColumnIndex(column);
-					result = Memory::HandleTextMemoryByte(row, column, isValidMem);
-
+					
+					result = Memory::HandleMemoryByte(row, column, mType == MemoryType::Text ? 0 : 1, isValidMem);
 					ImGui::PushStyleColor(ImGuiCol_Text, isValidMem ? activeMemory : inactiveMemory);
 					ImGui::Text("%.2X", isValidMem ? result : 0);
 					ImGui::PopStyleColor();
 					ASCIIstr += isValidMem && (char)result >= 32 ? (char)result : '.';
+					
+					
 				}
 
 				ImGui::TableSetColumnIndex(17);
@@ -183,7 +198,9 @@ void MemoryView::RenderBinary()
 		char buf2[17];
 		char buf3[20];
 
-		int addressBase = 0x400000;
+
+		int addressBase = GetMemoryType() == MemoryType::Text ? 0x400000 : 0x1001000;
+
 		//CL_CORE_INFO ("Memsize {0}",Memory::GetTextMemory().size());
 		ImGui::PushFont(mFont);
 		static ImGuiTableFlags flags = ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV | ImGuiTableFlags_Hideable;
@@ -236,7 +253,7 @@ void MemoryView::RenderBinary()
 					for (int column = 1; column < 33; column++)
 					{
 						ImGui::TableSetColumnIndex(column);
-						result = Memory::HandleTextMemoryBit(row, 32-column, isValidMem);
+						result = Memory::HandleMemoryBit(row, 32-column, mType == MemoryType::Text ? 0 : 1, isValidMem);
 
 						ImGui::PushStyleColor(ImGuiCol_Text, isValidMem ? activeMemory : inactiveMemory);
 						ImGui::Text(" %X", isValidMem ? result : 0);
@@ -258,8 +275,9 @@ void MemoryView::RenderBinary()
 	
 }
 
-void MemoryView::Render(RenderType type)
+void MemoryView::Render(RenderType rType, MemoryType mType)
 {
-	type == RenderType::Hex ? RenderHex() : RenderBinary();
+	SetMemoryType(mType);
+	rType == RenderType::Hex ? RenderHex() : RenderBinary();
 	return;
 }
