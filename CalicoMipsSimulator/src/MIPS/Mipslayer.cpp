@@ -27,22 +27,22 @@ namespace MIPSLayer {
 		return rd;
 	}
 
-	int subCallback(int& rs, int& rt, int& rd, unsigned int shamt) {
+	int subCallback(int& rd, int& rs, int& rt, unsigned int shamt) {
 		rd = rs - rt;
 		return rd;
 	}
 
-	int andCallback(const int& rs, const int& rt, int& rd, unsigned int shamt) {
+	int andCallback( int& rd, int& rs, int& rt, unsigned int shamt) {
 		rd = rs & rt;
 		return rd;
 	}
 
-	int orCallback(const int& rs, const int& rt, int& rd, unsigned int shamt) {
+	int orCallback(int& rd, int& rs, int& rt, unsigned int shamt) {
 		rd = rs | rt;
 		return rd;
 	}
 
-	int mulCallback(const int& rs, const int& rt, int& rd, unsigned int shamt) {
+	int mulCallback(int& rd, int& rs, int& rt, unsigned int shamt) {
 		rd = rs * rt;
 		return rd;
 	}
@@ -52,7 +52,7 @@ namespace MIPSLayer {
 	It's syntax is:
 	JR $first source register's address
 	*/
-	int jrCallback(const int& rs, const int& rt, int& rd, unsigned int shamt) {
+	int jrCallback(int& rd, int& rs, int& rt, unsigned int shamt) {
 
 		MIPSLayer::PC = rs;
 		return rs;
@@ -62,7 +62,7 @@ namespace MIPSLayer {
 	The SLT instruction sets the destination register's content to the value 1 if the first source register's contents are
 	less than the second source register's contents. Otherwise, it is set to the value 0.
 	*/
-	int sltCallback(const int& rs, const int& rt, int& rd, unsigned int shamt) {
+	int sltCallback(int& rd, int& rs, int& rt, unsigned int shamt) {
 		rd = (rs < rt) ? 1 : 0;
 		return rd;
 	}
@@ -72,15 +72,15 @@ namespace MIPSLayer {
 	When we perform a shift left logical instruction the low bits at right most is replaced by zeros and the high right most bit is discarded.
 	*/
 	// rs register is not used rd is a result register 
-	int sllCallback(const int& rs, const int& rt, int& rd, unsigned int shamt) {
-		rd = rt << shamt;
+	int sllCallback(int& rd, int& rs, int& rt, unsigned int shamt) {
+		rd = rs << rt;
 		return rd;
 	}
 
 	/*
 	*/
-	int srlCallback(const int& rs, const int& rt, int& rd, unsigned int shamt) {
-		rd = rt >> shamt;
+	int srlCallback(int& rd, int& rs, int& rt, unsigned int shamt) {
+		rd = rs >> rt;
 		return rd;
 	}
 
@@ -117,12 +117,12 @@ namespace MIPSLayer {
 	BEQ $first source register's address, $second source register's address, branch value.
 	*/
 	int beqCallback(int& rt, int& rs, int& immediate) {
-		MIPSLayer::PC = (rs == rt) ? immediate : MIPSLayer::PC;
+		Memory::SetPC((rs == rt) ? immediate/4 : Memory::GetPC());
 		return MIPSLayer::PC;
 	}
 
 	int bneCallback(int& rt, int& rs, int& immediate) {
-		MIPSLayer::PC = (rs != rt) ? immediate : MIPSLayer::PC;
+		Memory::SetPC((rs != rt) ? immediate/4 : Memory::GetPC());
 		return MIPSLayer::PC;
 	}
 
@@ -162,13 +162,13 @@ namespace MIPSLayer {
 	}
 
 	int jCallback(int& address) {
-		MIPSLayer::PC = address;
+		Memory::SetPC(address);
 		return address;
 	}
 
 	int jalCallback(int& address) {
-		MIPSLayer::RA = MIPSLayer::PC + 8;
-		MIPSLayer::PC = address;
+		MIPS::GetRegisterUMap()["$ra"]->getRef() += Memory::GetPC()+4;
+		Memory::SetPC(address);
 		return address;
 	}
 	
@@ -376,7 +376,7 @@ namespace MIPSLayer {
 		DataMemory_Too_Few_Args = BIT(8),
 		DataMemory_Invalid_Arg = BIT(9),
 	};
-	std::string MIPS::ITranslateToC(const std::string& aData, const std::string& memData, int callReason )
+	std::string MIPS::ITranslateToC(const std::string& aData, const std::string& memData, int callReason, bool& labelCheck)
 	{
 
 		std::string result = "";
@@ -393,6 +393,8 @@ namespace MIPSLayer {
 			IResetRegisterUMap();
 			Memory::FreeDataMemory();
 			DataMemoryHandler(memData);
+			Memory::SetPC(0);
+			Memory::SetVirtualPC(0);
 		}
 		
 		while ((pos = data.find(delimiter)) != std::string::npos) {
@@ -464,6 +466,7 @@ namespace MIPSLayer {
 					else if (it.at(0).back() == ':') {
 						m_Labels[TokenizedLineCount] = it.at(0).substr(0, it.at(0).size() - 1);
 						result = string_format("%s %s\n", result.c_str(), it.at(0).c_str());
+						labelCheck = true;
 						break;
 					}
 					else {
@@ -556,10 +559,10 @@ namespace MIPSLayer {
 							ExecutionTable temp;
 							temp.address = TokenizedLineCount;
 							temp.datas = datas;
-							CL_CORE_INFO("Data here {0}", datas[2]);
+							
 							temp.instruction = it.at(0);
 							temp.registerNames = vecRegisterNames;
-							m_ExecutionTable.emplace_back(temp);
+							
 							result = string_format("%s\t%s\n", result.c_str(), createCOutput(it, expectedArguments.size(), m_InstructionUMap[it.at(0)]->getOpcode(), m_InstructionUMap[it.at(0)]->getFunct()).c_str());
 						}
 						else {
@@ -704,31 +707,33 @@ namespace MIPSLayer {
 		unsigned int vecSize = m_ExecutionTable.size();
 		Memory::FreeTextMemory();
 		IResetRegisterUMap();
+		Memory::SetPC(0);
 		std::vector<std::pair<std::string, int>> Lines;
 		std::string delimiter = "\n";
 		std::string aData = dataMem;
+		
 		int lineCounter = 0;
 		size_t pos = 0;
+		std::string temp;
 		while ((pos = aData.find(delimiter)) != std::string::npos) {
-			Lines.push_back(std::make_pair(aData.substr(0, pos), lineCounter++));
+			temp = trim(aData.substr(0, pos));
+			if (temp != "") 
+				Lines.push_back(std::make_pair(temp, lineCounter++));
 			aData.erase(0, pos + delimiter.length());
-
 		}
-		if (aData != "") {
-			Lines.push_back(std::make_pair(aData.substr(0, pos), lineCounter++));
-		}
-
-
-		for (auto& it : Lines) {
-			CL_CORE_WARN(it.first);
-			TranslateToC(it.first, dataMem, 0);
+		if (trim(aData) != "") {
+			Lines.push_back(std::make_pair(trim(aData.substr(0, pos)), lineCounter++));
 		}
 
-
+		int counter = 0;
+		bool check = false;
+		Lines.erase(Lines.begin()); // sure that its a segment identifier
+		//TextEditor::GetInstance("##MainEdiyor");
+		while (Memory::GetPC() < Lines.size()) {
+			TranslateToC(Lines[Memory::GetPC()].first, dataMem, 0,check);
+			Memory::SetPC(Memory::GetPC() - 1);
+		}
 		
-		
-		
-
 	}
 	
 }

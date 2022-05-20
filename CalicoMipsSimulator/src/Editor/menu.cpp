@@ -9,6 +9,10 @@
 #include "settings.h"
 #include "MipsLayer.h"
 extern ImFont* Consolas;
+
+void mWorker() {
+	
+}
 void Menu::Render()
 {
 	ImGui::Columns(3);
@@ -41,14 +45,122 @@ void Menu::Render()
 		if (Settings::Tab == 1)
 		{
 			
-			
 			if (ImGui::Button(ICON_FA_CHECK" Execute", ImVec2(115, 34))) {
-				MIPSLayer::MIPS::Execute(TextEditor::GetInstance("##MainEditor")->GetText(), TextEditor::GetInstance("##DataEditor")->GetText());
+				Settings::ExecutePressed = !Settings::ExecutePressed;
+				Memory::FreeTextMemory();
+				MIPSLayer::MIPS::ResetRegisterUMap();
+				Memory::SetPC(0);
+				TextEditor::GetInstance("##MainEditor")->SetReadOnly(true);
+				Memory::SetVirtualPC(0);
+				//MIPSLayer::MIPS::Execute(TextEditor::GetInstance("##MainEditor")->GetText(), TextEditor::GetInstance("##DataEditor")->GetText());
 				CL_CORE_INFO("Called!");
 			}
+			
+			if (Settings::ExecutePressed) {
+				unsigned int PC = 0;
+
+				
+				std::vector<std::pair<std::string, int>> Lines;
+				std::string delimiter = "\n";
+				std::string aData = TextEditor::GetInstance("##MainEditor")->GetText();
+				TextEditor::CurrentRunLine mCur;
+				int lineCounter = 0;
+				size_t pos = 0;
+				std::string temp;
+				std::string PCstring = "";
+				while ((pos = aData.find(delimiter)) != std::string::npos) {
+					temp = trim(aData.substr(0, pos));
+					if (temp != "")
+						Lines.push_back(std::make_pair(temp, lineCounter++));
+					aData.erase(0, pos + delimiter.length());
+				}
+				if (trim(aData) != "") {
+					Lines.push_back(std::make_pair(trim(aData.substr(0, pos)), lineCounter++));
+				}
+
+				
+				Lines.erase(Lines.begin()); // sure that its a segment identifier
+				//TextEditor::GetInstance("##MainEdiyor");
+
+				int labelCounter = 0;
+				while (Memory::GetPC() < Lines.size()) {
+					bool labelCheck = false;
+					Settings::ExecCounter++;
+					CL_CORE_INFO("Counter = {0}, Linecounter = {1}, Mem = {2}", Settings::ExecCounter, Settings::LineCounter, Memory::GetPC());
+					mCur.clear();
+					MIPSLayer::MIPS::TranslateToC(Lines[Memory::GetPC()].first, TextEditor::GetInstance("##DataEditor")->GetText(), 0,labelCheck);
+					if (labelCheck) {
+						labelCounter++;
+						Lines.erase(Lines.begin() + Memory::GetPC());
+					}
+					mCur[Memory::GetPC() + 1 + labelCounter] = "sdfsd";
+					TextEditor::GetInstance("##MainEditor")->SetCurrentMarkers(mCur);
+					PCstring= string_format("Executed Successfully!\nPC at 0X%X", 0x400000+(Memory::GetPC())*4);
+					TextEditor::GetInstance("##OutputEditor")->SetText(PCstring.c_str());
+					//Memory::SetPC(Memory::GetPC() - 1);
+				}		
+				Settings::ExecutePressed = false;
+			}
 			ImGui::SameLine();
+			if (ImGui::Button(ICON_FA_SQUARE" Step", ImVec2(115, 34))) {
+				Settings::LineCounter++;
+				if (Settings::LineCounter == 1) {
+					Memory::FreeTextMemory();
+					MIPSLayer::MIPS::ResetRegisterUMap();
+					Memory::SetPC(0);
+					Settings::ExecCounter = 0;
+				}
+			}
+			if (Settings::LineCounter > 0 && Settings::LineCounter >= Settings::ExecCounter) {
+				CL_CORE_INFO("Counter = {0}, Linecounter = {1}, Mem = {2}", Settings::ExecCounter, Settings::LineCounter, Memory::GetPC());
+				std::vector<std::pair<std::string, int>> Lines;
+				std::string delimiter = "\n";
+				std::string aData = TextEditor::GetInstance("##MainEditor")->GetText();
+				TextEditor::CurrentRunLine mCur;
+				int lineCounter = 0;
+				size_t pos = 0;
+				std::string temp;
+				while ((pos = aData.find(delimiter)) != std::string::npos) {
+					temp = trim(aData.substr(0, pos));
+					if (temp != "")
+						Lines.push_back(std::make_pair(temp, lineCounter++));
+					aData.erase(0, pos + delimiter.length());
+				}
+				if (trim(aData) != "") {
+					Lines.push_back(std::make_pair(trim(aData.substr(0, pos)), lineCounter++));
+				}
+
+
+				Lines.erase(Lines.begin()); // sure that its a segment identifier
+				
+				while (Memory::GetPC() < Lines.size()) {
+					Settings::ExecCounter++;
+					bool check = false;
+					mCur.clear();
+					MIPSLayer::MIPS::TranslateToC(Lines[Memory::GetPC()].first, TextEditor::GetInstance("##DataEditor")->GetText(), 0, check);
+					if(check)
+						Lines.erase(Lines.begin()+ Memory::GetPC());
+					mCur[Memory::GetPC() + 1] = "sdfsd";
+					TextEditor::GetInstance("##MainEditor")->SetCurrentMarkers(mCur);
+					TextEditor::GetInstance("##OutputEditor")->SetText("Step Successfully!");
+					//Memory::SetPC(Memory::GetPC() - 1);
+				}
+			}
+
+
+
+			
+			ImGui::SameLine();
+
 			ImGui::SetCursorPosX(ImGui::GetCursorPosX() +imguipp::getx()-145); // Set Stop button place
-			if (ImGui::Button(ICON_FA_SQUARE" Stop", ImVec2(115, 34))) {}
+			if (ImGui::Button(ICON_FA_SQUARE" Stop", ImVec2(115, 34))) {
+				Settings::ExecutePressed = 0;
+				Settings::ExecCounter = 0;
+				Settings::LineCounter = 0;
+				Memory::SetPC(0);
+				TextEditor::GetInstance("##MainEditor")->SetReadOnly(false);
+				TextEditor::GetInstance("##OutputEditor")->SetText("");
+			}
 			//if (ImGui::Button(ICON_FA_FILE" Execute from file", ImVec2(200, 35))) {}
 
 			ImGui::Spacing();
@@ -74,32 +186,6 @@ void Menu::Render()
 		// Dumper Tab
 		else if (Settings::Tab == 2)
 		{
-			static ImGuiTextFilter filter;
-			static std::vector<std::string> resources = 
-			{
-				"_cfx_internal",
-				"mysql-async",
-				"essentialmode",
-				"async",
-				"es_extended"
-			};
-
-			filter.Draw(ICON_FA_SEARCH" Search", 240);
-			ImGui::PushStyleColor(ImGuiCol_FrameBg, IM_COL32(0, 0, 0, 0));
-			if (ImGui::ListBoxHeader("##ResourcesList", ImVec2(imguipp::getx(), imguipp::gety() - 35)))
-			{
-				for (const auto& resource : resources)
-				{
-					if (filter.PassFilter(resource.c_str()))
-					{
-						if (ImGui::TreeNode(resource.c_str()))
-							ImGui::TreePop();				
-					}
-				}
-				ImGui::ListBoxFooter();
-			}
-			ImGui::PopStyleColor();
-			if (ImGui::Button(ICON_FA_FOLDER_OPEN" Save to folder", ImVec2(205, 34))) {}
 			
 		}		
 	}

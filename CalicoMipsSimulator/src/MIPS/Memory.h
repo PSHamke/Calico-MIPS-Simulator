@@ -55,10 +55,32 @@ public:
 	static int GetDataMemoryValue(unsigned int address, bool &check) {
 		return Get().IGetDataMemoryValue(address, check);
 	}
-		
 	
+	static int GetPC() {
+		return Get().IGetPC();
+	}
+	
+	static void SetPC(int value) {
+		return Get().ISetPC(value);
+	}
+
 	static const char* GetAscii(unsigned int mMemoryRow) {
 		return Get().IGetAscii(mMemoryRow);
+	}
+
+	static void SetTextMemory() {
+		
+		for (int i = 0; i < 500; i++) {
+			int textMem = 0;
+			Get().m_TextMemory.push_back(textMem);
+		}
+		
+	}
+	static int GetVirtualPC() {
+		return Get().IGetVirtualPC();
+	}
+	static void SetVirtualPC(int value) {
+		return Get().ISetVirtualPC(value);
 	}
 
 private:
@@ -158,9 +180,25 @@ private:
 	std::unordered_map <unsigned int, MemoryRegion>& IGetDataMemory() {
 		return m_DataMemory;
 	}
+	
+	int IGetPC() {
+		return m_PC;
+	}
+	int IGetVirtualPC() {
+		return m_VirtualPC;
+	}
+	
+	void ISetPC(int value) {
+		m_PC = value;
+	}
+	void ISetVirtualPC(int value) {
+		m_VirtualPC = value;
+	}
 private:
 	
 	std::vector <int> m_TextMemory;
 	std::unordered_map <unsigned int, MemoryRegion> m_DataMemory;
+	int m_PC;
+	int m_VirtualPC;
 	
 };

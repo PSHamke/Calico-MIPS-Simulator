@@ -1027,7 +1027,11 @@ void TextEditor::Render()
 					ImGui::EndTooltip();
 				}
 			}
-
+			auto runLineIt = mRunLines.find(lineNo + 1);
+			if (runLineIt != mRunLines.end()) {
+				auto end = ImVec2(lineStartScreenPos.x + contentSize.x + 2.0f * scrollX, lineStartScreenPos.y + mCharAdvance.y);
+				drawList->AddRectFilled(start, end, mPalette[(int)PaletteIndex::CurrenLineMarkers]);
+			}
 			// Draw line number (right aligned)
 			snprintf(buf, 16, "%X  ",GetStartSegmentValue()+(lineNo*4));
 
@@ -1428,9 +1432,10 @@ void TextEditor::EnterCharacter(ImWchar aChar, bool aShift)
 		line.erase(line.begin() + cindex, line.begin() + line.size());
 		SetCursorPosition(Coordinates(coord.mLine + 1, GetCharacterColumn(coord.mLine + 1, (int)whitespaceSize)));
 		u.mAdded = (char)aChar;
+		bool temp;
 		if (mInstanceId == "##MainEditor") {
 			CL_CORE_INFO("##Main");
-			TextEditor::GetInstance("##COutputEditor")->SetText(MIPSLayer::MIPS::TranslateToC(GetText(), TextEditor::GetInstance("##DataEditor")->GetText(),1)); // Turn into C code 
+			TextEditor::GetInstance("##COutputEditor")->SetText(MIPSLayer::MIPS::TranslateToC(GetText(), TextEditor::GetInstance("##DataEditor")->GetText(),1,temp)); // Turn into C code 
 		}
 		else if (mInstanceId == "##DataEditor") {
 			ErrorMarkers& error1 = (ErrorMarkers) MIPSLayer::DataMemoryHandler(GetText());
@@ -2127,7 +2132,8 @@ const TextEditor::Palette& TextEditor::GetDarkPalette()
 			0x40000000, // Current line fill
 			0x40808080, // Current line fill (inactive)
 			0x40a0a0a0, // Current line edge
-			0x750217ff // Current line edge (inactive)
+			0x750217ff, // Current line edge (inactive)
+			ImColor(66,245,245,125),
 		} };
 	return p;
 }

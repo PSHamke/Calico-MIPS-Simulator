@@ -50,6 +50,7 @@ public:
 		CurrentLineFillInactive,
 		CurrentLineEdge,
 		Register,
+		CurrenLineMarkers,
 		Max
 	};
 
@@ -144,6 +145,7 @@ public:
 	typedef std::unordered_map<std::string, Identifier> Identifiers;
 	typedef std::unordered_set<std::string> Keywords;
 	typedef std::map<int, std::string> ErrorMarkers;
+	typedef std::map<int, std::string> CurrentRunLine;
 	typedef std::unordered_set<int> Breakpoints;
 	typedef std::array<ImU32, (unsigned)PaletteIndex::Max> Palette;
 	typedef uint8_t Char;
@@ -220,6 +222,7 @@ public:
 
 	void SetErrorMarkers(const ErrorMarkers& aMarkers) { mErrorMarkers = aMarkers; }
 	void SetBreakpoints(const Breakpoints& aMarkers) { mBreakpoints = aMarkers; }
+	void SetCurrentMarkers(const CurrentRunLine& aMarkers) { mRunLines = aMarkers; }
 
 	void Render(const char* aTitle, const ImVec2& aSize = ImVec2(), bool aBorder = false);
 	void SetText(const std::string& aText);
@@ -414,6 +417,7 @@ private:
 	bool mCheckComments;
 	Breakpoints mBreakpoints;
 	ErrorMarkers mErrorMarkers;
+	CurrentRunLine mRunLines;
 	ImVec2 mCharAdvance;
 	Coordinates mInteractiveStart, mInteractiveEnd;
 	std::string mLineBuffer;

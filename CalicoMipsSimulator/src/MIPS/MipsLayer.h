@@ -22,8 +22,8 @@ namespace MIPSLayer {
 			return instance;
 		}
 		
-		static std::string TranslateToC(const std::string& data, const std::string& dataMem,int callReason) {
-			return Get().ITranslateToC(data, dataMem, callReason);
+		static std::string TranslateToC(const std::string& data, const std::string& dataMem,int callReason, bool& labelCheck) {
+			return Get().ITranslateToC(data, dataMem, callReason, labelCheck);
 		}
 		static void Execute(const std::string& textMem, const std::string& dataMem) {
 			return Get().IExecute(textMem, dataMem);
@@ -74,7 +74,7 @@ namespace MIPSLayer {
 		std::vector <ExecutionTable>& IGet_ExecutionTable() {
 			return m_ExecutionTable;
 		}
-		std::string ITranslateToC(const std::string&  data , const std::string& dataMem, int callReason);
+		std::string ITranslateToC(const std::string&  data , const std::string& dataMem, int callReason, bool &labelCheck);
 		void IExecute(const std::string& textMem, const std::string& dataMem);
 	private:
 		std::unordered_map<std::string, Register*> m_RegisterUMap;
