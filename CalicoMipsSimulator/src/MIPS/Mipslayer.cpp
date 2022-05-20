@@ -23,10 +23,8 @@ namespace MIPSLayer {
 	int addCallback(int& rd, int& rt, int& rs, unsigned int shamt) {
 
 		rd = rs + rt;
-		std::cout << "Executed!\n";
 		return rd;
 	}
-
 	int subCallback(int& rd, int& rs, int& rt, unsigned int shamt) {
 		rd = rs - rt;
 		return rd;
@@ -54,7 +52,7 @@ namespace MIPSLayer {
 	*/
 	int jrCallback(int& rd, int& rs, int& rt, unsigned int shamt) {
 
-		MIPSLayer::PC = rs;
+		Memory::SetPC(rs);
 		return rs;
 	}
 
@@ -183,7 +181,7 @@ namespace MIPSLayer {
 		m_InstructionUMap["jr"] = new InstructionFormatR("jr", 0x0, 0x08, MIPSLayer::jrCallback);
 		m_InstructionUMap["sll"] = new InstructionFormatR("sll", 0x0, 0x00, MIPSLayer::sllCallback);
 		m_InstructionUMap["srl"] = new InstructionFormatR("srl", 0x0, 0x02, MIPSLayer::srlCallback);
-		//m_InstructionUMapap["mul"] = new  InstructionFormatR("mul", 0x0, 0x00, MIPSLayer::mulCallback);
+		m_InstructionUMap["mult"] = new  InstructionFormatR("mul", 0x0, 0x00, MIPSLayer::mulCallback);
 		m_InstructionUMap["addi"] = new InstructionFormatI("addi", 0x8, MIPSLayer::addiCallback);
 		m_InstructionUMap["andi"] = new InstructionFormatI("andi", 0xC, MIPSLayer::andiCallback);
 		m_InstructionUMap["ori"] = new InstructionFormatI("ori", 0xD, MIPSLayer::oriCallback);
@@ -205,7 +203,6 @@ namespace MIPSLayer {
 
 	void MIPS::initRegistersMap()
 	{
-		std::cout << "Called !!";
 		m_RegisterUMap["$zero"] = new Register("zero", 0, NULL, registerStatus::free);
 		m_RegisterUMap["$at"] = new Register("at", 1, NULL, registerStatus::free);
 		m_RegisterUMap["$v0"] = new Register("v0", 2, NULL, registerStatus::free);
@@ -238,7 +235,6 @@ namespace MIPSLayer {
 		m_RegisterUMap["$sp"] = new Register("sp", 29, NULL, registerStatus::free);
 		m_RegisterUMap["$fp"] = new Register("fp", 30, NULL, registerStatus::free);
 		m_RegisterUMap["$ra"] = new Register("ra", 31, NULL, registerStatus::free);
-	
 	}
 
 	
@@ -395,6 +391,7 @@ namespace MIPSLayer {
 			DataMemoryHandler(memData);
 			Memory::SetPC(0);
 			Memory::SetVirtualPC(0);
+			Memory::SetCallingReason(0);
 		}
 		
 		while ((pos = data.find(delimiter)) != std::string::npos) {
@@ -487,46 +484,53 @@ namespace MIPSLayer {
 						checkShamt = (expectedArguments.at(3) & Special_Shamt);
 						expectedArgumentsSize -= 1; // subtract shamt
 					}
-					if (expectedArguments.at(1) & Special_Negligible) {
-						expectedArgumentsSize -= 1;
-						special_case = 1;
-					}
-					if (expectedArguments.at(1) & Special_Paranthesis) {
-						std::string temp = "";
-						if (it.size() == 3) {
-							temp = it.at(2);
+					if (expectedArgumentsSize > 2) {
+						if (expectedArguments.at(1) & Special_Negligible) {
+							expectedArgumentsSize -= 1;
+							special_case = 1;
 						}
-						else if (it.size() == 4) {
-							temp = it.at(3);
-						}
-						
-						size_t open = temp.find("(");
-						size_t close = temp.find(")");
-						if (open == std::string::npos) {
-							CL_CORE_INFO("Left brackets missing!");
-						}
-						if (close == std::string::npos) {
-							CL_CORE_INFO("Right brackets missing!");
-						}
-						else {
+						if (expectedArguments.at(1) & Special_Paranthesis) {
+							std::string temp = "";
 							if (it.size() == 3) {
-								it.at(2) = temp.substr(0, open);
-								it.push_back(temp.substr(open + 1, close - open - 1));
+								temp = it.at(2);
+							}
+							else if (it.size() == 4) {
+								temp = it.at(3);
+							}
+
+							size_t open = temp.find("(");
+							size_t close = temp.find(")");
+							if (open == std::string::npos) {
+								CL_CORE_INFO("Left brackets missing!");
+							}
+							if (close == std::string::npos) {
+								CL_CORE_INFO("Right brackets missing!");
 							}
 							else {
-								it.at(3) = temp.substr(open + 1, close - open - 1);
+								if (it.size() == 3) {
+									it.at(2) = temp.substr(0, open);
+									it.push_back(temp.substr(open + 1, close - open - 1));
+								}
+								else {
+									it.at(3) = temp.substr(open + 1, close - open - 1);
+								}
+
 							}
-							
+
 						}
-					
 					}
+					
 					if (it.size() == expectedArgumentsSize + 1) { // count instruction +1 
 						int i = 1;
 						for (; i <= expectedArgumentsSize; i++) {
 							if (expectedArguments.at(i - 1) & Special_Constant || expectedArguments.at(i - 1) & Special_Negligible) {
 								if (is_number(it.at(i))) {
+									
 									int immediate = (atoi(it.at(i).c_str()));
+									if (expectedArguments.at(i - 1) & Special_Paranthesis)
+										immediate = immediate / 4;
 									std::cout << "Approved ! Number \n";
+									
 									datas.push_back((immediate));
 								}
 								else {

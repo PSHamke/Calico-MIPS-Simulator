@@ -4,9 +4,11 @@
 #include <functional>
 #include <vector>
 #include <Memory.h>
+
 enum class InstructionType {
 	R, I, J
 };
+
 class Instruction {
 public:
 	Instruction(const std::string name, const InstructionType type, const unsigned int opcode, const int funct,
@@ -57,7 +59,7 @@ public:
 
 	// rs rt rd shamt 
 	int Execute(std::vector<std::reference_wrapper<int>>& memory, std::vector<int>& registerNumber, unsigned int& PC) override {
-		int textMem = this->getOpcode() << 26 | registerNumber[0] << 21 | registerNumber[1] << 16 | registerNumber[2] << 11 | memory[3] << 6 | this->getFunct();
+		int textMem = this->getOpcode() << 26 | registerNumber[0] << 21 | registerNumber[1] << 16 | registerNumber[2] << 11 | memory[3] << 6 | this->getFunct(); // how memory handled
 		Memory::GetTextMemory().push_back(textMem);
 		Memory::SetPC(Memory::GetPC() + 1);
 		return m_Functionality(memory[0], memory[1], memory[2], memory[3]);
@@ -75,20 +77,16 @@ public:
 	int Execute(std::vector<std::reference_wrapper<int>>& memory, std::vector<int>& registerNumber, unsigned int& PC) override {
 		unsigned int textMem;
 		if (registerNumber.size() == 2) {
-			textMem= this->getOpcode() << 26 | registerNumber[0] << 21 | registerNumber[1] << 16 | memory[2];
+			textMem= this->getOpcode() << 26 | registerNumber[0] << 21 | registerNumber[1] << 16 | memory[2]; // how memory handled
 		}
 		else {
 			textMem = this->getOpcode() << 26 | registerNumber[0] << 21  | memory[2];
 		}
 		
-		if (Memory::GetTextMemory().size() < Memory::GetVirtualPC()) {
-			CL_CORE_ERROR("Mem Size Allocated {0} ", Memory::GetVirtualPC());
-		}
-		else {
+
+		if (Memory::GetCallingReason() == 0) {
 			Memory::GetTextMemory().push_back(textMem);
-			Memory::SetVirtualPC(Memory::GetVirtualPC() + 1);
-		}
-		
+		} 
 		Memory::SetPC(Memory::GetPC() + 1);
 		return m_Functionality(memory[0], memory[1], memory[2]);
 	}
@@ -104,7 +102,7 @@ private:
 public:
 	int Execute(std::vector<std::reference_wrapper<int>>& memory, std::vector<int>& registerNumber, unsigned int& PC) override {
 		// process for PC
-		int textMem = this->getOpcode() << 26 | memory[0];
+		int textMem = this->getOpcode() << 26 | memory[0]; //how memory handled
 		Memory::GetTextMemory().push_back(textMem);
 		return m_Functionality(memory[0]);
 	}

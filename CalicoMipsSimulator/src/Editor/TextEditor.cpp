@@ -2133,7 +2133,7 @@ const TextEditor::Palette& TextEditor::GetDarkPalette()
 			0x40808080, // Current line fill (inactive)
 			0x40a0a0a0, // Current line edge
 			0x750217ff, // Current line edge (inactive)
-			ImColor(66,245,245,125),
+			ImColor(66,245,245,25),
 		} };
 	return p;
 }

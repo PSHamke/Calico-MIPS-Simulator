@@ -47,11 +47,12 @@ void Menu::Render()
 			
 			if (ImGui::Button(ICON_FA_CHECK" Execute", ImVec2(115, 34))) {
 				Settings::ExecutePressed = !Settings::ExecutePressed;
-				Memory::FreeTextMemory();
+				//Memory::FreeTextMemory();
 				MIPSLayer::MIPS::ResetRegisterUMap();
 				Memory::SetPC(0);
 				TextEditor::GetInstance("##MainEditor")->SetReadOnly(true);
 				Memory::SetVirtualPC(0);
+				Memory::SetCallingReason(1);
 				//MIPSLayer::MIPS::Execute(TextEditor::GetInstance("##MainEditor")->GetText(), TextEditor::GetInstance("##DataEditor")->GetText());
 				CL_CORE_INFO("Called!");
 			}

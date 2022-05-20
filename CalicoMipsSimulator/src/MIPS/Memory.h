@@ -70,11 +70,6 @@ public:
 
 	static void SetTextMemory() {
 		
-		for (int i = 0; i < 500; i++) {
-			int textMem = 0;
-			Get().m_TextMemory.push_back(textMem);
-		}
-		
 	}
 	static int GetVirtualPC() {
 		return Get().IGetVirtualPC();
@@ -83,6 +78,12 @@ public:
 		return Get().ISetVirtualPC(value);
 	}
 
+	static int GetCallingReason() {
+		return Get().IGetCallingReason();
+	}
+	static void SetCallingReason(int callingReason) {
+		return Get().ISetCallingReason(callingReason);
+	}
 private:
 	
 
@@ -194,11 +195,18 @@ private:
 	void ISetVirtualPC(int value) {
 		m_VirtualPC = value;
 	}
+	void ISetCallingReason(int callingReason) {
+		m_CallingReason = callingReason;
+	}
+	int IGetCallingReason() {
+		return m_CallingReason;
+	}
 private:
 	
 	std::vector <int> m_TextMemory;
 	std::unordered_map <unsigned int, MemoryRegion> m_DataMemory;
 	int m_PC;
 	int m_VirtualPC;
+	int m_CallingReason;
 	
 };
