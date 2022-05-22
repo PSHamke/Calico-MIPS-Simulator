@@ -93,9 +93,9 @@ namespace MIPSLayer {
 		Reg_Expression_Evaluation | Reg_Arguments | Reg_Temporaries | Reg_SavedTemporaries | Reg_ExtraTemporaries | Reg_Constant_Value}},
 
 		// J Type jumps
-		{"jal",{ Special_Constant}},
+		{"jal",{ Special_Label|Special_Constant}},
 
-		{"j",{ Special_Constant}}
+		{"j",{ Special_Label |Special_Constant}}
 
 
 	}; // pair of instruction and expected arguments

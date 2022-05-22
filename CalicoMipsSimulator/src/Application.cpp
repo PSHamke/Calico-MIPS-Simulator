@@ -103,7 +103,7 @@ void Application::Init()
 void Application::Run()
 {
 	
-	
+	int8_t a = 200;
 	while (msg.message != WM_QUIT)
 	{
 		if (PeekMessage(&msg, 0, 0U, 0U, PM_REMOVE))

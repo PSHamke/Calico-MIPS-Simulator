@@ -4,12 +4,29 @@
 #include <map>
 #include "Instruction.h"
 #include "Registers.h"
+#include "Core.h"
 namespace MIPSLayer {
-	
+	typedef int ErrorFlag;
+
+	enum ErrorFlag_ {
+		Error_None = 0,
+		Segment_Start = BIT(1),
+		Segment_Duplicate = BIT(2),
+		Instruction_Start = BIT(3),
+		Incompleted_Label = BIT(4),
+		Label_Duplicate= BIT(5),
+		Numeric_Value = BIT(6),
+		Register_Value = BIT(7),
+		Insufficient_Instruction = BIT(8),
+		DataMemory_Too_Many_Args = BIT(9),
+		DataMemory_Too_Few_Args = BIT(10),
+		DataMemory_Invalid_Arg = BIT(11),
+
+	};
 	
 	class MIPS { // Singleton
 	public: 
-		struct ExecutionTable {
+		struct ExecutionTable { // Focus on that
 			int address;
 			std::string instruction;
 			std::vector<std::reference_wrapper<int>> datas;
@@ -22,8 +39,8 @@ namespace MIPSLayer {
 			return instance;
 		}
 		
-		static std::string TranslateToC(const std::string& data, const std::string& dataMem,int callReason, bool& labelCheck) {
-			return Get().ITranslateToC(data, dataMem, callReason, labelCheck);
+		static std::string ValidateInput(const std::string& data, const std::string& dataMem,int callReason, bool& labelCheck) {
+			return Get().IValidateInput(data, dataMem, callReason, labelCheck);
 		}
 		static void Execute(const std::string& textMem, const std::string& dataMem) {
 			return Get().IExecute(textMem, dataMem);
@@ -38,7 +55,14 @@ namespace MIPSLayer {
 		static void ResetRegisterUMap() {
 			return Get().IResetRegisterUMap();
 		}
-		
+		static void ResetCResultMap() {
+			return Get().IResetCResultMap();
+		}
+
+		static void ResetLabelUMap() {
+			return Get().IResetLabelUmap();
+		}
+
 		static std::vector<ExecutionTable>& GetExecutionTable() {
 			return Get().IGet_ExecutionTable();
 		}
@@ -51,12 +75,13 @@ namespace MIPSLayer {
 	private:
 		
 		MIPS() {
-			initInstructionMap();
-			initRegistersMap();
+			InitInstructionMap();
+			InitRegistersMap();
+			m_SegmentStart = false;
 		}
 		
-		void initRegistersMap();
-		void initInstructionMap();
+		void InitRegistersMap();
+		void InitInstructionMap();
 		std::unordered_map<std::string, Instruction*>& IGet_InstructionUMap() {
 			return m_InstructionUMap;
 		}
@@ -71,16 +96,30 @@ namespace MIPSLayer {
 		void IResetExecutionTable() {
 			m_ExecutionTable.clear();
 		}
+		void IResetCResultMap() {
+			m_CResultMap.clear();
+		}
+		void IResetLabelUmap() {
+			m_LabelUMap.clear();
+		}
 		std::vector <ExecutionTable>& IGet_ExecutionTable() {
 			return m_ExecutionTable;
 		}
-		std::string ITranslateToC(const std::string&  data , const std::string& dataMem, int callReason, bool &labelCheck);
+		std::string IValidateInput(const std::string& data , const std::string& dataMem, int callReason, bool &labelCheck);
+		void IValidateLabel(const std::string& data,int p_CurrentLine, ErrorFlag& errorFlag);
+		void IValidateInstructions(std::vector <std::string>& data,int p_CurrentLine, ErrorFlag& errorFlag);
 		void IExecute(const std::string& textMem, const std::string& dataMem);
+		bool ILabelInsert(const std::string& label, int address);
+		bool ILabelCheck(const std::string& label);
+		std::string IConstructCResult();
 	private:
 		std::unordered_map<std::string, Register*> m_RegisterUMap;
 		std::unordered_map<std::string, Instruction*> m_InstructionUMap;
-		std::unordered_map<int, std::string> m_Labels;
+		std::unordered_map<std::string, int> m_LabelUMap; // Label Name -> Relevant Address 
+		std::map<int, std::string> m_CResultMap;
+		std::vector<std::string> m_UnregisteredLabels;
 		std::vector<ExecutionTable> m_ExecutionTable;
+		bool m_SegmentStart;
 	};
 	
 	std::map <int,std::string> DataMemoryHandler(const std::string & text);

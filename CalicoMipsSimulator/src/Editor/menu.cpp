@@ -89,7 +89,7 @@ void Menu::Render()
 					Settings::ExecCounter++;
 					CL_CORE_INFO("Counter = {0}, Linecounter = {1}, Mem = {2}", Settings::ExecCounter, Settings::LineCounter, Memory::GetPC());
 					mCur.clear();
-					MIPSLayer::MIPS::TranslateToC(Lines[Memory::GetPC()].first, TextEditor::GetInstance("##DataEditor")->GetText(), 0,labelCheck);
+					MIPSLayer::MIPS::ValidateInput(Lines[Memory::GetPC()].first, TextEditor::GetInstance("##DataEditor")->GetText(), 0,labelCheck);
 					if (labelCheck) {
 						labelCounter++;
 						Lines.erase(Lines.begin() + Memory::GetPC());
@@ -138,7 +138,7 @@ void Menu::Render()
 					Settings::ExecCounter++;
 					bool check = false;
 					mCur.clear();
-					MIPSLayer::MIPS::TranslateToC(Lines[Memory::GetPC()].first, TextEditor::GetInstance("##DataEditor")->GetText(), 0, check);
+					MIPSLayer::MIPS::ValidateInput(Lines[Memory::GetPC()].first, TextEditor::GetInstance("##DataEditor")->GetText(), 0, check);
 					if(check)
 						Lines.erase(Lines.begin()+ Memory::GetPC());
 					mCur[Memory::GetPC() + 1] = "sdfsd";

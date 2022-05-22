@@ -20,7 +20,8 @@ namespace MIPSLayer {
 		Special_Constant = BIT(13),
 		Special_Negligible = BIT(14),
 		Special_Paranthesis = BIT(15),
-		Reg_Error = BIT(16)
+		Special_Label = BIT(17),
+		Reg_Error = BIT(18)
 	};
 	std::vector<int>& InstructionInfo(const std::string& token);
 	int RegisterInfo(const std::string& token);
