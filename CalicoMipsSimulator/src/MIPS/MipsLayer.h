@@ -41,11 +41,11 @@ namespace MIPSLayer {
 			return instance;
 		}
 		
-		static std::string ValidateInput(const std::string& data, const std::string& dataMem,int callReason, bool& labelCheck) {
-			return Get().IValidateInput(data, dataMem, callReason, labelCheck);
+		static std::string ValidateInput(const std::string& data, const std::string& dataMem) {
+			return Get().IValidateInput(data, dataMem);
 		}
-		static void Execute(const std::string& textMem, const std::string& dataMem) {
-			return Get().IExecute(textMem, dataMem);
+		static void Execute(int pStep) {
+			return Get().IExecute(pStep);
 		}
 		
 		static std::unordered_map<std::string, Instruction*>& GetInstructionUMap() {
@@ -111,10 +111,10 @@ namespace MIPSLayer {
 		std::vector <ExecutionTable>& IGet_ExecutionTable() {
 			return m_ExecutionTable;
 		}
-		std::string IValidateInput(const std::string& data , const std::string& dataMem, int callReason, bool &labelCheck);
+		std::string IValidateInput(const std::string& data , const std::string& dataMem);
 		void IValidateLabel(const std::string& data,int p_CurrentLine, ErrorFlag& errorFlag);
 		void IValidateInstructions(std::vector <std::string>& data,int p_CurrentLine, ErrorFlag& errorFlag);
-		void IExecute(const std::string& textMem, const std::string& dataMem);
+		void IExecute(int pStep);
 		bool ILabelInsert(const std::string label, int address);
 		bool ILabelCheck(const std::string label);
 		std::string IConstructCResult();

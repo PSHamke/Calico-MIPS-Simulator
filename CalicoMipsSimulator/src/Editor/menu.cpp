@@ -47,60 +47,19 @@ void Menu::Render()
 			
 			if (ImGui::Button(ICON_FA_CHECK" Execute", ImVec2(115, 34))) {
 				Settings::ExecutePressed = !Settings::ExecutePressed;
-				//Memory::FreeTextMemory();
-				MIPSLayer::MIPS::ResetRegisterUMap();
-				Memory::SetPC(0);
-				TextEditor::GetInstance("##MainEditor")->SetReadOnly(true);
-				Memory::SetVirtualPC(0);
-				Memory::SetCallingReason(1);
-				//MIPSLayer::MIPS::Execute(TextEditor::GetInstance("##MainEditor")->GetText(), TextEditor::GetInstance("##DataEditor")->GetText());
-				CL_CORE_INFO("Called!");
+				
 			}
 			
 			if (Settings::ExecutePressed) {
-				unsigned int PC = 0;
-
-				
-				std::vector<std::pair<std::string, int>> Lines;
-				std::string delimiter = "\n";
-				std::string aData = TextEditor::GetInstance("##MainEditor")->GetText();
-				TextEditor::CurrentRunLine mCur;
-				int lineCounter = 0;
-				size_t pos = 0;
-				std::string temp;
-				std::string PCstring = "";
-				while ((pos = aData.find(delimiter)) != std::string::npos) {
-					temp = trim(aData.substr(0, pos));
-					if (temp != "")
-						Lines.push_back(std::make_pair(temp, lineCounter++));
-					aData.erase(0, pos + delimiter.length());
-				}
-				if (trim(aData) != "") {
-					Lines.push_back(std::make_pair(trim(aData.substr(0, pos)), lineCounter++));
-				}
-
-				
-				Lines.erase(Lines.begin()); // sure that its a segment identifier
-				//TextEditor::GetInstance("##MainEdiyor");
-
-				int labelCounter = 0;
-				while (Memory::GetPC() < Lines.size()) {
-					bool labelCheck = false;
-					Settings::ExecCounter++;
-					CL_CORE_INFO("Counter = {0}, Linecounter = {1}, Mem = {2}", Settings::ExecCounter, Settings::LineCounter, Memory::GetPC());
-					mCur.clear();
-					MIPSLayer::MIPS::ValidateInput(Lines[Memory::GetPC()].first, TextEditor::GetInstance("##DataEditor")->GetText(), 0,labelCheck);
-					if (labelCheck) {
-						labelCounter++;
-						Lines.erase(Lines.begin() + Memory::GetPC());
-					}
-					mCur[Memory::GetPC() + 1 + labelCounter] = "sdfsd";
-					TextEditor::GetInstance("##MainEditor")->SetCurrentMarkers(mCur);
-					PCstring= string_format("Executed Successfully!\nPC at 0X%X", 0x400000+(Memory::GetPC())*4);
-					TextEditor::GetInstance("##OutputEditor")->SetText(PCstring.c_str());
-					//Memory::SetPC(Memory::GetPC() - 1);
-				}		
+				TextEditor::GetInstance("##MainEditor")->SetReadOnly(true);
+				Memory::SetCallingReason(1);
+				TextEditor::GetInstance("##COutputEditor")->SetText(
+					MIPSLayer::MIPS::ValidateInput(TextEditor::GetInstance("##MainEditor")->GetText(), TextEditor::GetInstance("##DataEditor")->GetText())
+					);
+				MIPSLayer::MIPS::Execute(-1);
+				TextEditor::GetInstance("##OutputEditor")->SetText(string_format("Executed\nPC at 0X%.2X", 0x400000+Memory::GetPC()*4).c_str());
 				Settings::ExecutePressed = false;
+				
 			}
 			ImGui::SameLine();
 			if (ImGui::Button(ICON_FA_SQUARE" Step", ImVec2(115, 34))) {
@@ -108,46 +67,18 @@ void Menu::Render()
 				if (Settings::LineCounter == 1) {
 					Memory::FreeTextMemory();
 					MIPSLayer::MIPS::ResetRegisterUMap();
+					
+					Memory::SetVirtualPC(0);
+					TextEditor::GetInstance("##COutputEditor")->SetText(
+						MIPSLayer::MIPS::ValidateInput(TextEditor::GetInstance("##MainEditor")->GetText(), TextEditor::GetInstance("##DataEditor")->GetText())
+					);			
 					Memory::SetPC(0);
+					MIPSLayer::MIPS::ResetRegisterUMap();
 					Settings::ExecCounter = 0;
 				}
+				MIPSLayer::MIPS::Execute(Settings::LineCounter-1);
 			}
-			if (Settings::LineCounter > 0 && Settings::LineCounter >= Settings::ExecCounter) {
-				CL_CORE_INFO("Counter = {0}, Linecounter = {1}, Mem = {2}", Settings::ExecCounter, Settings::LineCounter, Memory::GetPC());
-				std::vector<std::pair<std::string, int>> Lines;
-				std::string delimiter = "\n";
-				std::string aData = TextEditor::GetInstance("##MainEditor")->GetText();
-				TextEditor::CurrentRunLine mCur;
-				int lineCounter = 0;
-				size_t pos = 0;
-				std::string temp;
-				while ((pos = aData.find(delimiter)) != std::string::npos) {
-					temp = trim(aData.substr(0, pos));
-					if (temp != "")
-						Lines.push_back(std::make_pair(temp, lineCounter++));
-					aData.erase(0, pos + delimiter.length());
-				}
-				if (trim(aData) != "") {
-					Lines.push_back(std::make_pair(trim(aData.substr(0, pos)), lineCounter++));
-				}
-
-
-				Lines.erase(Lines.begin()); // sure that its a segment identifier
-				
-				while (Memory::GetPC() < Lines.size()) {
-					Settings::ExecCounter++;
-					bool check = false;
-					mCur.clear();
-					MIPSLayer::MIPS::ValidateInput(Lines[Memory::GetPC()].first, TextEditor::GetInstance("##DataEditor")->GetText(), 0, check);
-					if(check)
-						Lines.erase(Lines.begin()+ Memory::GetPC());
-					mCur[Memory::GetPC() + 1] = "sdfsd";
-					TextEditor::GetInstance("##MainEditor")->SetCurrentMarkers(mCur);
-					TextEditor::GetInstance("##OutputEditor")->SetText("Step Successfully!");
-					//Memory::SetPC(Memory::GetPC() - 1);
-				}
-			}
-
+			
 
 
 			

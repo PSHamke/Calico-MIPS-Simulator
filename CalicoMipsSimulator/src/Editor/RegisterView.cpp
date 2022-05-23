@@ -89,7 +89,7 @@ void RegisterView::Render()
 		ImGui::PopStyleVar();
 		ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
 		ImGui::PopID();
-		CL_CORE_INFO("Num = {0}  Value = {1}", numberState, valueState);
+		//CL_CORE_INFO("Num = {0}  Value = {1}", numberState, valueState);
 		// Demonstrate using clipper for large vertical lists
 		ImGuiListClipper clipper;
 		clipper.Begin(32);

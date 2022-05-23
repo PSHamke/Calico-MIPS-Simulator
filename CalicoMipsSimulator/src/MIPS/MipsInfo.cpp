@@ -66,11 +66,11 @@ namespace MIPSLayer {
 
 		{"beq",{ Reg_Expression_Evaluation | Reg_Arguments | Reg_Temporaries | Reg_SavedTemporaries | Reg_ExtraTemporaries,
 		Reg_Expression_Evaluation | Reg_Arguments | Reg_Temporaries | Reg_SavedTemporaries | Reg_ExtraTemporaries | Reg_Constant_Value,
-		Special_Constant | Reg_Constant_Value}},
+		Special_Constant | Reg_Constant_Value |Special_Label}},
 
 		{"bne",{ Reg_Expression_Evaluation | Reg_Arguments | Reg_Temporaries | Reg_SavedTemporaries | Reg_ExtraTemporaries,
 		Reg_Expression_Evaluation | Reg_Arguments | Reg_Temporaries | Reg_SavedTemporaries | Reg_ExtraTemporaries | Reg_Constant_Value,
-		Special_Constant | Reg_Constant_Value}},
+		Special_Constant | Reg_Constant_Value | Special_Label}},
 
 		{"lui",{ Reg_Expression_Evaluation | Reg_Arguments | Reg_Temporaries | Reg_SavedTemporaries | Reg_ExtraTemporaries,
 		Special_Negligible,

@@ -60,7 +60,9 @@ public:
 	// rs rt rd shamt 
 	int Execute(std::vector<std::reference_wrapper<int>>& Registers, int immediate, std::vector<int>& registerNumbers, unsigned int& PC) override {
 		int textMem = this->getOpcode() << 26 | registerNumbers[0] << 21 | registerNumbers[1] << 16 | registerNumbers[2] << 11 | immediate << 6 | this->getFunct(); // how memory handled
-		Memory::GetTextMemory().push_back(textMem);
+		if (Memory::GetCallingReason() == 0) {
+			Memory::GetTextMemory().push_back(textMem);
+		}
 		Memory::SetPC(Memory::GetPC() + 1);
 		return m_Functionality(Registers[0], Registers[1], Registers[2], Registers[3]);
 	}
@@ -103,7 +105,9 @@ public:
 	int Execute(std::vector<std::reference_wrapper<int>>& Registers, int immediate, std::vector<int>& registerNumbers, unsigned int& PC) override {
 		// process for PC
 		int textMem = this->getOpcode() << 26 | immediate; //how memory handled
-		Memory::GetTextMemory().push_back(textMem);
+		if (Memory::GetCallingReason() == 0) {
+			Memory::GetTextMemory().push_back(textMem);
+		}
 		return m_Functionality(immediate);
 	}
 };

@@ -116,12 +116,12 @@ namespace MIPSLayer {
 	BEQ $first source register's address, $second source register's address, branch value.
 	*/
 	int beqCallback(int& rt, int& rs, int& immediate) {
-		Memory::SetPC((rs == rt) ? immediate / 4 : Memory::GetPC());
+		Memory::SetPC((rs == rt) ? immediate  : Memory::GetPC());
 		return MIPSLayer::PC;
 	}
 
 	int bneCallback(int& rt, int& rs, int& immediate) {
-		Memory::SetPC((rs != rt) ? immediate / 4 : Memory::GetPC());
+		Memory::SetPC((rs != rt) ? immediate : Memory::GetPC());
 		return MIPSLayer::PC;
 	}
 
@@ -362,7 +362,7 @@ namespace MIPSLayer {
 		return result;
 	}
 
-	std::string MIPS::IValidateInput(const std::string& aData, const std::string& memData, int callReason, bool& labelCheck)
+	std::string MIPS::IValidateInput(const std::string& aData, const std::string& memData)
 	{
 		// Be sure that only 1 line of code passed here at a time 
 		std::string c_OutputResult = "";
@@ -374,18 +374,18 @@ namespace MIPSLayer {
 		std::vector<std::vector<std::string>> Tokens;
 		int lineCounter = 0;
 		std::string temp;
-		if (callReason) {
-			Memory::FreeTextMemory();
-			IResetRegisterUMap();
-			Memory::FreeDataMemory();
-			DataMemoryHandler(memData);
-			Memory::SetPC(0);
-			Memory::SetVirtualPC(0);
-			Memory::SetCallingReason(0);
-			ResetCResultMap();
-			ResetLabelUMap();
-			IResetExecutionTable();
-		}
+		
+		Memory::FreeTextMemory();
+		IResetRegisterUMap();
+		Memory::FreeDataMemory();
+		DataMemoryHandler(memData);
+		Memory::SetPC(0);
+		Memory::SetVirtualPC(0);
+		Memory::SetCallingReason(0);
+		ResetCResultMap();
+		ResetLabelUMap();
+		IResetExecutionTable();
+		
 
 		while ((pos = data.find(delimiter)) != std::string::npos) {
 			temp = trim(data.substr(0, pos));
@@ -424,12 +424,17 @@ namespace MIPSLayer {
 		for (auto& token : Tokens) 
 			IValidateLabel(token.at(0), TokenizedLineCount++, errorflag);
 		// Should check all labels first 
-
+		ExecutionTable temp1;
 		TokenizedLineCount = 0;
 		for (auto& token : Tokens) { // Loops through each line of tokens
 			errorflag = Error_None;
 			switch (token.size()) {
 			case 1:
+				
+				temp1.address = TokenizedLineCount;
+				temp1.instruction = "label";
+				m_ExecutionTable.push_back(temp1);		
+				CL_CORE_ERROR("Label : {}", token.at(0));
 				break;
 			case 2: case 3: case 4:
 				IValidateInstructions(token,TokenizedLineCount, errorflag);
@@ -558,6 +563,7 @@ namespace MIPSLayer {
 			}
 			else {
 				m_CResultMap[pCurrentLine] = string_format("int main(void) { ");
+				m_CResultMap[pCurrentLine] = pInput;
 				m_SegmentStart = true;
 			}
 		}
@@ -653,6 +659,7 @@ namespace MIPSLayer {
 						CL_CORE_ERROR("Label Expected!");
 						if (ILabelCheck(token)) {
 							immediate = m_LabelUMap[token];
+							CL_CORE_ERROR("Label Expected! {0}, address {1}", token, immediate);
 							//datas.push_back((std::ref(immediate)));
 						}
 						else {
@@ -723,44 +730,35 @@ namespace MIPSLayer {
 
 }
 
-	
-	void MIPS::IExecute(const std::string& dataMem, const std::string& textMem)
+	void MIPS::IExecute(int step)
 	{
-		CL_CORE_INFO("Initial Data {}", dataMem);
-		
-		unsigned int PC = 0;
-		unsigned int vecSize = m_ExecutionTable.size();
-		Memory::FreeTextMemory();
-		IResetRegisterUMap();
-		Memory::SetPC(0);
-		std::vector<std::pair<std::string, int>> Lines;
-		std::string delimiter = "\n";
-		std::string aData = dataMem;
-		
-		int lineCounter = 0;
-		size_t pos = 0;
-		std::string temp;
-		while ((pos = aData.find(delimiter)) != std::string::npos) {
-			temp = trim(aData.substr(0, pos));
-			if (temp != "") 
-				Lines.push_back(std::make_pair(temp, lineCounter++));
-			aData.erase(0, pos + delimiter.length());
-		}
-		if (trim(aData) != "") {
-			Lines.push_back(std::make_pair(trim(aData.substr(0, pos)), lineCounter++));
-		}
-
+		unsigned int i = 0;
 		int counter = 0;
-		bool check = false;
-		Lines.erase(Lines.begin()); // sure that its a segment identifier
-		//TextEditor::GetInstance("##MainEdiyor");
-		while (Memory::GetPC() < Lines.size()) {
-			ValidateInput(Lines[Memory::GetPC()].first, dataMem, 0,check);
-			Memory::SetPC(Memory::GetPC() - 1);
+		CL_CORE_ERROR("Virtual PC = {0} Step = {1}",Memory::GetVirtualPC(), step);
+		CL_CORE_INFO("Execution Before TableSize {0} Current PC = {1}", m_ExecutionTable.size(), Memory::GetPC());
+		//IResetRegisterUMap();
+		//Memory::SetPC(0);
+		Memory::SetCallingReason(1); // Set .text memory read only 
+		while (Memory::GetPC() < m_ExecutionTable.size() && Memory::GetVirtualPC() < step) {
+			CL_CORE_INFO("Execution done for address {0} Current PC = {1}", m_ExecutionTable[Memory::GetPC()].address, Memory::GetPC());
+			if (m_ExecutionTable[Memory::GetPC()].instruction == "label") {
+				Memory::SetPC(Memory::GetPC() + 1);
+				CL_CORE_INFO("Label here {0}",Memory::GetPC());
+				continue;
+			}
+			m_InstructionUMap[m_ExecutionTable[Memory::GetPC()].instruction]->Execute(m_ExecutionTable[Memory::GetPC()].datas,
+				m_ExecutionTable[Memory::GetPC()].immediate, m_ExecutionTable[Memory::GetPC()].registerNames,i);
+			Memory::SetVirtualPC(Memory::GetVirtualPC()+1);
+			counter++;
+			if (counter > 10000) {
+				CL_CORE_INFO("Infinite Loop aborted!");
+				break;
+			}
+			
 		}
 		
 	}
-	
+
 	bool MIPS::ILabelInsert(const std::string label, int address)
 	{
 		if (!ILabelCheck(label)) {
