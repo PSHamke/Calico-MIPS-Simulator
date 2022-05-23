@@ -384,6 +384,7 @@ namespace MIPSLayer {
 			Memory::SetCallingReason(0);
 			ResetCResultMap();
 			ResetLabelUMap();
+			IResetExecutionTable();
 		}
 
 		while ((pos = data.find(delimiter)) != std::string::npos) {
@@ -419,25 +420,16 @@ namespace MIPSLayer {
 		int special_case = 0;
 		ErrorFlag errorflag = Error_None;
 		// First find all labels construct label map, then investigate instructions 
-		int counter = 0;
-		
-		//for (auto iter = Tokens.begin(); iter != Tokens.end(); ) { // 
-		//	if (iter->size() == 1) {
-		//		IValidateLabel(iter->at(0), counter, errorflag);
-		//		iter = Tokens.erase(iter);
-		//		counter++;
-		//	}
-		//	else {
-		//		counter++;
-		//		++iter;
-		//	}
-		//}
 		int TokenizedLineCount = 0;
+		for (auto& token : Tokens) 
+			IValidateLabel(token.at(0), TokenizedLineCount++, errorflag);
+		// Should check all labels first 
+
+		TokenizedLineCount = 0;
 		for (auto& token : Tokens) { // Loops through each line of tokens
 			errorflag = Error_None;
 			switch (token.size()) {
 			case 1:
-				IValidateLabel(token.at(0), TokenizedLineCount, errorflag);
 				break;
 			case 2: case 3: case 4:
 				IValidateInstructions(token,TokenizedLineCount, errorflag);
@@ -570,7 +562,7 @@ namespace MIPSLayer {
 			}
 		}
 		else if (pInput.back() == ':') { // Make sure its a label and ended with ':' 
-			check = ILabelInsert(pInput, pCurrentLine);
+			check = ILabelInsert(pInput.substr(0,pInput.size()-1), pCurrentLine); // insert label without ':'
 			if (!check) {
 				pErrorFlag |= Label_Duplicate;
 				m_CResultMap[pCurrentLine] = string_format("[Error] Duplicate label.");
@@ -596,140 +588,140 @@ namespace MIPSLayer {
 		std::vector<std::reference_wrapper<int>> datas;
 		std::vector<int> vecRegisterNames;
 		unsigned int PC = 0;
-		if (expectedArgumentsSize != givenArgumentsSize-1) { // ??
-			pErrorFlag |= Insufficient_Instruction;
-			m_CResultMap[pCurrentLine]=  string_format("[Error] Insufficient Instruction at line %d.\n", pCurrentLine);
-			CL_CORE_INFO("Expected {0} Given {1}", expectedArgumentsSize, givenArgumentsSize);
+		if (expectedArgumentsSize == 4) { // Possibly R type need to validate Shift amount as well.
+			checkShamt = (expectedArguments.at(3) & Special_Shamt);
+			expectedArgumentsSize -= 1; // Shamt is not a part of the input 
 		}
-		else {
-			if (expectedArgumentsSize == 4) { // Possibly R type need to validate Shift amount as well.
-				checkShamt = (expectedArguments.at(3) & Special_Shamt);
-				expectedArgumentsSize -= 1; // Shamt is not a part of the input 
+		if (expectedArgumentsSize == 3) { // Lui validation  Need to neglect 2nd register here 
+			if (expectedArguments.at(1) & Special_Negligible) {
+				expectedArgumentsSize -= 1;
+				specialCases = 1;
 			}
-			if (expectedArgumentsSize == 3) { // Lui validation  Need to neglect 2nd register here 
-				if (expectedArguments.at(1) & Special_Negligible) {
-					expectedArgumentsSize -= 1;
-					specialCases = 1;
+			if (expectedArguments.at(1) & Special_Paranthesis) { // lw sw lb sb validation // order of the arguments are differ // ie. lw $t1,offset($t2)
+
+				if (givenArgumentsSize == 3) { //properly formatted by user 
+					temp = pInput.at(2);
 				}
-				if (expectedArguments.at(1) & Special_Paranthesis) { // lw sw lb sb validation // order of the arguments are differ // ie. lw $t1,offset($t2)
-
-					if (givenArgumentsSize == 3) { //properly formatted by user 
-						temp = pInput.at(2);
-					}
-					else if (givenArgumentsSize == 4) {
-						temp = pInput.at(3);
-					}
-					// Rearrange token vector. 
-					size_t open = temp.find("(");
-					size_t close = temp.find(")");
-					if (open == std::string::npos) {
-						CL_CORE_INFO("Left brackets missing!");
-					}
-					if (close == std::string::npos) {
-						CL_CORE_INFO("Right brackets missing!");
-					}
-					else {
-						if (pInput.size() == 3) {
-							pInput.at(2) = temp.substr(0, open);
-							pInput.push_back(temp.substr(open + 1, close - open - 1));
-						}
-						else {
-							pInput.at(3) = temp.substr(open + 1, close - open - 1);
-						}
-
-					}
-
+				else if (givenArgumentsSize == 4) {
+					temp = pInput.at(3);
 				}
-			}
-
-			if (givenArgumentsSize == expectedArgumentsSize + 1) { // count instruction name  +1  
-				int i;
-				int expectedArgument = 0;
-				for (i = 1; i <= expectedArgumentsSize; i++) {
-					std::string& token = pInput.at(i);
-					expectedArgument = expectedArguments.at(i - 1);
-					if (expectedArgument & Special_Constant || expectedArgument & Special_Negligible) { // Check for constant and negligible
-						int immediate = 0;
-						if (is_number(token)) {
-							immediate = (atoi(token.c_str()));
-
-								if (expectedArguments.at(i - 1) & Special_Paranthesis)
-									immediate = immediate / 4;
-
-								datas.push_back((immediate));
-						}
-						else if (expectedArgument & Special_Label) { // it might be label // label might not be registered to map yet.. 
-							if (ILabelCheck(token)) {
-								immediate = m_LabelUMap[token];
-							}
-							else {
-								m_UnregisteredLabels.push_back(token);
-								specialCases = 2;
-							}
-							datas.push_back((std::ref(immediate)));
-						}
-						else {
-							pErrorFlag |= Numeric_Value;
-							break;
-						}
-
-					}
-					else if (expectedArgument & RegisterInfo(token)) {
-
-						datas.push_back(m_RegisterUMap[token]->getRef());
-						//std::cout << "Value of reg = " << m_RegisterUMap[token]->getRef() << "\n";
-						//std::cout << "Value of reg = " << m_RegisterUMap[token]->getValue() << "\n";
-						vecRegisterNames.push_back(m_RegisterUMap[token]->getNumber());
-						if (specialCases== 1) {
-							datas.push_back(specialCases);
-						}
-					}
-					else if (RegisterInfo(token) & Reg_Error) {
-						pErrorFlag |= Register_Value;
-						break;
-					
-					}
+				// Rearrange token vector. 
+				size_t open = temp.find("(");
+				size_t close = temp.find(")");
+				if (open == std::string::npos) {
+					CL_CORE_INFO("Left brackets missing!");
 				}
-
-				if (pErrorFlag == 0) {
-					if (checkShamt)
-						
-						datas.push_back(tempShamt);
-
-					if(specialCases!=2)
-						m_InstructionUMap[pInput.at(0)]->Execute(datas, vecRegisterNames, PC);
-					/*ExecutionTable temp;
-					temp.address = pCurrentLine;
-					temp.datas = datas;
-
-					temp.instruction = token.at(0);
-					temp.registerNames = vecRegisterNames;*/
-
-					m_CResultMap[pCurrentLine] = string_format("\t%s", createCOutput(pInput, expectedArguments.size(), m_InstructionUMap[pInput.at(0)]->getOpcode(), m_InstructionUMap[pInput.at(0)]->getFunct()).c_str());
+				if (close == std::string::npos) {
+					CL_CORE_INFO("Right brackets missing!");
 				}
 				else {
-					if (pErrorFlag & Instruction_Start) {
-						m_CResultMap[pCurrentLine] = string_format("[Error] Expected instruction, got[ %s ] at Line %d.", pInput.at(i).c_str(), pCurrentLine);
+					if (pInput.size() == 3) {
+						pInput.at(2) = temp.substr(0, open);
+						pInput.push_back(temp.substr(open + 1, close - open - 1));
 					}
-					if (pErrorFlag & Numeric_Value) {
-						m_CResultMap[pCurrentLine] = string_format("[Error] Expected numeric, got[ %s ] at Line %d.", pInput.at(i).c_str(), pCurrentLine);
-						
+					else {
+						pInput.at(3) = temp.substr(open + 1, close - open - 1);
 					}
-					if (pErrorFlag & Register_Value) {
-						m_CResultMap[pCurrentLine] = string_format("[Error] Expected register type, got [ %s ] at Line %d.",pInput.at(i).c_str(), pCurrentLine);
-						
-					}
+
 				}
 
 			}
-			else {
-				
+		}
+		if (expectedArgumentsSize != givenArgumentsSize - 1) { // ??
+			pErrorFlag |= Insufficient_Instruction;
+			m_CResultMap[pCurrentLine] = string_format("[Error] Insufficient Instruction at line %d.\n", pCurrentLine);
+			CL_CORE_INFO("Expected {0} Given {1}", expectedArgumentsSize, givenArgumentsSize);
+		}
+		else {// count instruction name  +1  
+			int i;
+			int expectedArgument = 0;
+			int  immediate = 0;
+			for (i = 1; i <= expectedArgumentsSize; i++) {
+				std::string& token = pInput.at(i);
+				expectedArgument = expectedArguments.at(i - 1);
+				if (expectedArgument & Special_Constant || expectedArgument & Special_Negligible) { // Check for constant and negligible
+						
+					if (is_number(token)) {
+						immediate = (atoi(token.c_str()));
+
+							if (expectedArguments.at(i - 1) & Special_Paranthesis)
+								immediate = immediate / 4;
+							//m_Immediates.push_back(immediate);
+							//datas.push_back((m_Immediates.back()));
+					}
+					else if (expectedArgument & Special_Label) { // it might be label // label might not be registered to map yet.. 
+						CL_CORE_ERROR("Label Expected!");
+						if (ILabelCheck(token)) {
+							immediate = m_LabelUMap[token];
+							//datas.push_back((std::ref(immediate)));
+						}
+						else {
+							pErrorFlag |= Non_Exist_Label;
+								
+							break;
+						}
+							
+					}
+					else {
+						pErrorFlag |= Numeric_Value;
+						break;
+					}
+
+				}
+				else if (expectedArgument & RegisterInfo(token)) {
+
+					datas.push_back(m_RegisterUMap[token]->getRef());
+					//std::cout << "Value of reg = " << m_RegisterUMap[token]->getRef() << "\n";
+					//std::cout << "Value of reg = " << m_RegisterUMap[token]->getValue() << "\n";
+					vecRegisterNames.push_back(m_RegisterUMap[token]->getNumber());
+					if (specialCases== 1) {
+						datas.push_back(specialCases);
+					}
+				}
+				else if (RegisterInfo(token) & Reg_Error) {
+					pErrorFlag |= Register_Value;
+					break;
+					
+				}
 			}
 
+			if (pErrorFlag == 0) {
+				if (checkShamt)
+					datas.push_back(tempShamt);
+
+				if(specialCases!=2)
+					m_InstructionUMap[pInput.at(0)]->Execute(datas,immediate, vecRegisterNames, PC);
+				ExecutionTable temp;
+				temp.address = pCurrentLine;
+				temp.datas = datas;
+				temp.immediate = immediate;
+				temp.instruction = pInput.at(0);
+				temp.registerNames = vecRegisterNames;
+				m_ExecutionTable.push_back(temp);
+				m_CResultMap[pCurrentLine] = string_format("\t%s", createCOutput(pInput, expectedArguments.size(), m_InstructionUMap[pInput.at(0)]->getOpcode(), m_InstructionUMap[pInput.at(0)]->getFunct()).c_str());
+			}
+			else {
+				if (pErrorFlag & Instruction_Start) {
+					m_CResultMap[pCurrentLine] = string_format("[Error] Expected instruction, got[ %s ] at Line %d.", pInput.at(i).c_str(), pCurrentLine);
+				}
+				if (pErrorFlag & Numeric_Value) {
+					m_CResultMap[pCurrentLine] = string_format("[Error] Expected numeric, got[ %s ] at Line %d.", pInput.at(i).c_str(), pCurrentLine);
+						
+				}
+				if (pErrorFlag & Register_Value) {
+					m_CResultMap[pCurrentLine] = string_format("[Error] Expected register type, got [ %s ] at Line %d.",pInput.at(i).c_str(), pCurrentLine);
+						
+				}
+				if (pErrorFlag & Non_Exist_Label) {
+					m_CResultMap[pCurrentLine] = string_format("[Error] Expected label, got [ %s ] at Line %d.", pInput.at(i).c_str(), pCurrentLine);
+				}
+			}
 
 		}
+			
 
-	}
+
+}
 
 	
 	void MIPS::IExecute(const std::string& dataMem, const std::string& textMem)
@@ -769,9 +761,9 @@ namespace MIPSLayer {
 		
 	}
 	
-	bool MIPS::ILabelInsert(const std::string& label, int address)
+	bool MIPS::ILabelInsert(const std::string label, int address)
 	{
-		if (ILabelCheck(label)) {
+		if (!ILabelCheck(label)) {
 			m_LabelUMap[label] = address;
 			return true;
 		}
@@ -780,14 +772,13 @@ namespace MIPSLayer {
 		}
 	}
 
-	bool MIPS::ILabelCheck(const std::string& label)
+	bool MIPS::ILabelCheck(const std::string label) // Return false if already exist key 
 	{
-		if (m_LabelUMap.find(label) == m_LabelUMap.end()) {
-			return true;
-		}
-		else {
+		if (m_LabelUMap.find(label) == m_LabelUMap.end())
 			return false;
-		}
+		
+		return true;
+
 	}
 
 	std::string MIPS::IConstructCResult()

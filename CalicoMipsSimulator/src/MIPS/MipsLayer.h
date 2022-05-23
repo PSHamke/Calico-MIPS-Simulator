@@ -15,12 +15,13 @@ namespace MIPSLayer {
 		Instruction_Start = BIT(3),
 		Incompleted_Label = BIT(4),
 		Label_Duplicate= BIT(5),
-		Numeric_Value = BIT(6),
-		Register_Value = BIT(7),
-		Insufficient_Instruction = BIT(8),
-		DataMemory_Too_Many_Args = BIT(9),
-		DataMemory_Too_Few_Args = BIT(10),
-		DataMemory_Invalid_Arg = BIT(11),
+		Non_Exist_Label= BIT(6),
+		Numeric_Value = BIT(7),
+		Register_Value = BIT(8),
+		Insufficient_Instruction = BIT(9),
+		DataMemory_Too_Many_Args = BIT(10),
+		DataMemory_Too_Few_Args = BIT(11),
+		DataMemory_Invalid_Arg = BIT(12),
 
 	};
 	
@@ -30,6 +31,7 @@ namespace MIPSLayer {
 			int address;
 			std::string instruction;
 			std::vector<std::reference_wrapper<int>> datas;
+			int immediate;
 			std::vector<int> registerNames;
 		};
 		MIPS(const MIPS&) = delete;
@@ -66,12 +68,13 @@ namespace MIPSLayer {
 		static std::vector<ExecutionTable>& GetExecutionTable() {
 			return Get().IGet_ExecutionTable();
 		}
-		/*static std::vector<unsigned int>& GetTextMemory() {
-			return Get().IGet_TextMemory();
+		static std::unordered_map<std::string, int>& GetLabelUMap() {
+			return Get().IGetLabelUMap();
 		}
-		static void IExecuteWrapper(std::string& instruction, std::vector<std::reference_wrapper<int>>& memory, unsigned int& PC) {
-			Get().IGet_InstructionUMap()[instruction]->Execute(memory, PC);
-		}*/
+		
+		static void printExecutionTable() {
+			return Get().IPrintExecutionTable();
+		}
 	private:
 		
 		MIPS() {
@@ -102,6 +105,9 @@ namespace MIPSLayer {
 		void IResetLabelUmap() {
 			m_LabelUMap.clear();
 		}
+		std::unordered_map<std::string, int> IGetLabelUMap() {
+			return m_LabelUMap;
+		}
 		std::vector <ExecutionTable>& IGet_ExecutionTable() {
 			return m_ExecutionTable;
 		}
@@ -109,9 +115,23 @@ namespace MIPSLayer {
 		void IValidateLabel(const std::string& data,int p_CurrentLine, ErrorFlag& errorFlag);
 		void IValidateInstructions(std::vector <std::string>& data,int p_CurrentLine, ErrorFlag& errorFlag);
 		void IExecute(const std::string& textMem, const std::string& dataMem);
-		bool ILabelInsert(const std::string& label, int address);
-		bool ILabelCheck(const std::string& label);
+		bool ILabelInsert(const std::string label, int address);
+		bool ILabelCheck(const std::string label);
 		std::string IConstructCResult();
+		void IPrintExecutionTable() {
+			for (const auto& it : m_ExecutionTable) {
+				CL_CORE_INFO("Address at {0}", it.address);
+				CL_CORE_INFO("Instruction {}", it.instruction);
+				for (const auto& it2 : it.datas) {
+					CL_CORE_INFO("Datas : {0}", it2);
+				}
+				CL_CORE_INFO("Immediate {0}", it.immediate);
+				for (const auto& it3 : it.registerNames) {
+					CL_CORE_INFO("Register Name : {}", it3);
+				}
+
+			}
+		}
 	private:
 		std::unordered_map<std::string, Register*> m_RegisterUMap;
 		std::unordered_map<std::string, Instruction*> m_InstructionUMap;
@@ -119,6 +139,7 @@ namespace MIPSLayer {
 		std::map<int, std::string> m_CResultMap;
 		std::vector<std::string> m_UnregisteredLabels;
 		std::vector<ExecutionTable> m_ExecutionTable;
+		std::vector<int> m_Immediates;
 		bool m_SegmentStart;
 	};
 	

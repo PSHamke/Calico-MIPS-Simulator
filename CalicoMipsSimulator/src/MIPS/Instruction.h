@@ -41,7 +41,7 @@ public:
 	unsigned int getFunct() {
 		return m_Funct;
 	}
-	virtual int Execute(std::vector<std::reference_wrapper<int>>& memory,std::vector<int>& registerNumber, unsigned int& PC) = 0;
+	virtual int Execute(std::vector<std::reference_wrapper<int>>& Registers,int immediate,std::vector<int>& registerNumbers, unsigned int& PC) = 0;
 };
 
 
@@ -58,11 +58,11 @@ private:
 public:
 
 	// rs rt rd shamt 
-	int Execute(std::vector<std::reference_wrapper<int>>& memory, std::vector<int>& registerNumber, unsigned int& PC) override {
-		int textMem = this->getOpcode() << 26 | registerNumber[0] << 21 | registerNumber[1] << 16 | registerNumber[2] << 11 | memory[3] << 6 | this->getFunct(); // how memory handled
+	int Execute(std::vector<std::reference_wrapper<int>>& Registers, int immediate, std::vector<int>& registerNumbers, unsigned int& PC) override {
+		int textMem = this->getOpcode() << 26 | registerNumbers[0] << 21 | registerNumbers[1] << 16 | registerNumbers[2] << 11 | immediate << 6 | this->getFunct(); // how memory handled
 		Memory::GetTextMemory().push_back(textMem);
 		Memory::SetPC(Memory::GetPC() + 1);
-		return m_Functionality(memory[0], memory[1], memory[2], memory[3]);
+		return m_Functionality(Registers[0], Registers[1], Registers[2], Registers[3]);
 	}
 };
 
@@ -74,13 +74,13 @@ public:
 private:
 	std::function<int(int&, int&, int&)> m_Functionality;
 public:
-	int Execute(std::vector<std::reference_wrapper<int>>& memory, std::vector<int>& registerNumber, unsigned int& PC) override {
+	int Execute(std::vector<std::reference_wrapper<int>>& Registers, int immediate, std::vector<int>& registerNumbers, unsigned int& PC) override {
 		unsigned int textMem;
-		if (registerNumber.size() == 2) {
-			textMem= this->getOpcode() << 26 | registerNumber[0] << 21 | registerNumber[1] << 16 | memory[2]; // how memory handled
+		if (registerNumbers.size() == 2) {
+			textMem= this->getOpcode() << 26 | registerNumbers[0] << 21 | registerNumbers[1] << 16 | immediate; // how memory handled
 		}
 		else {
-			textMem = this->getOpcode() << 26 | registerNumber[0] << 21  | memory[2];
+			textMem = this->getOpcode() << 26 | registerNumbers[0] << 21  | immediate;
 		}
 		
 
@@ -88,7 +88,7 @@ public:
 			Memory::GetTextMemory().push_back(textMem);
 		} 
 		Memory::SetPC(Memory::GetPC() + 1);
-		return m_Functionality(memory[0], memory[1], memory[2]);
+		return m_Functionality(Registers[0], Registers[1], immediate);
 	}
 };
 
@@ -100,10 +100,10 @@ public:
 private:
 	std::function<int(int&)> m_Functionality;
 public:
-	int Execute(std::vector<std::reference_wrapper<int>>& memory, std::vector<int>& registerNumber, unsigned int& PC) override {
+	int Execute(std::vector<std::reference_wrapper<int>>& Registers, int immediate, std::vector<int>& registerNumbers, unsigned int& PC) override {
 		// process for PC
-		int textMem = this->getOpcode() << 26 | memory[0]; //how memory handled
+		int textMem = this->getOpcode() << 26 | immediate; //how memory handled
 		Memory::GetTextMemory().push_back(textMem);
-		return m_Functionality(memory[0]);
+		return m_Functionality(immediate);
 	}
 };

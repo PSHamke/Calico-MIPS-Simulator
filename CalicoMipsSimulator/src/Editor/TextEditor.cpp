@@ -1436,6 +1436,7 @@ void TextEditor::EnterCharacter(ImWchar aChar, bool aShift)
 		if (mInstanceId == "##MainEditor") {
 			CL_CORE_INFO("##Main");
 			TextEditor::GetInstance("##COutputEditor")->SetText(MIPSLayer::MIPS::ValidateInput(GetText(), TextEditor::GetInstance("##DataEditor")->GetText(),1,temp)); // Turn into C code 
+			MIPSLayer::MIPS::printExecutionTable();
 		}
 		else if (mInstanceId == "##DataEditor") {
 			ErrorMarkers& error1 = (ErrorMarkers) MIPSLayer::DataMemoryHandler(GetText());
