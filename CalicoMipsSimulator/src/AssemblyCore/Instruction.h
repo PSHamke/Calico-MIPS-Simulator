@@ -4,6 +4,25 @@
 #include <functional>
 #include <vector>
 #include <Memory.h>
+#include "Core.h"
+typedef int ErrorFlag;
+
+enum ErrorFlag_ {
+	Error_None = 0,
+	Segment_Start = BIT(1),
+	Segment_Duplicate = BIT(2),
+	Instruction_Start = BIT(3),
+	Incompleted_Label = BIT(4),
+	Label_Duplicate = BIT(5),
+	Non_Exist_Label = BIT(6),
+	Numeric_Value = BIT(7),
+	Register_Value = BIT(8),
+	Insufficient_Instruction = BIT(9),
+	DataMemory_Too_Many_Args = BIT(10),
+	DataMemory_Too_Few_Args = BIT(11),
+	DataMemory_Invalid_Arg = BIT(12),
+
+};
 
 enum class InstructionType {
 	R, I, J

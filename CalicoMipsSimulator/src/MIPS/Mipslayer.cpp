@@ -5,6 +5,7 @@
 #include "HelperString.h"
 #include "MipsInfo.h"
 #include "Log.h"
+#include "Callbacks.h"
 
 //-add*, sub*, and*, or* , addi**, andi**, ori**
 //
@@ -21,181 +22,31 @@ namespace MIPSLayer {
 	int PC = 0; // programming counter 
 	char* M; // data memory 
 	int RA = 0; // return address
-	int addCallback(int& rd, int& rt, int& rs, unsigned int shamt) {
-
-		rd = rs + rt;
-		return rd;
-	}
-	int subCallback(int& rd, int& rs, int& rt, unsigned int shamt) {
-		rd = rs - rt;
-		return rd;
-	}
-
-	int andCallback(int& rd, int& rs, int& rt, unsigned int shamt) {
-		rd = rs & rt;
-		return rd;
-	}
-
-	int orCallback(int& rd, int& rs, int& rt, unsigned int shamt) {
-		rd = rs | rt;
-		return rd;
-	}
-
-	int mulCallback(int& rd, int& rs, int& rt, unsigned int shamt) {
-		rd = rs * rt;
-		return rd;
-	}
-	/*
-	The Jump Register instruction causes the PC to jump to the contents of the first source register.
-
-	It's syntax is:
-	JR $first source register's address
-	*/
-	int jrCallback(int& rd, int& rs, int& rt, unsigned int shamt) {
-
-		Memory::SetPC(rs);
-		return rs;
-	}
-
-	/*
-	The SLT instruction sets the destination register's content to the value 1 if the first source register's contents are
-	less than the second source register's contents. Otherwise, token is set to the value 0.
-	*/
-	int sltCallback(int& rd, int& rs, int& rt, unsigned int shamt) {
-		rd = (rs < rt) ? 1 : 0;
-		return rd;
-	}
-	/*
-	A Shift Left Logical instruction in MIPS assembly is used for shifting the bits to the left.
-	The amount of shift depends on the value we give token.
-	When we perform a shift left logical instruction the low bits at right most is replaced by zeros and the high right most bit is discarded.
-	*/
-	// rs register is not used rd is a result register 
-	int sllCallback(int& rd, int& rs, int& rt, unsigned int shamt) {
-		rd = rs << rt;
-		return rd;
-	}
-
-	/*
-	*/
-	int srlCallback(int& rd, int& rs, int& rt, unsigned int shamt) {
-		rd = rs >> rt;
-		return rd;
-	}
-
-
-	// I Type Instruction Callbacks
-	int addiCallback(int& rt, int& rs, int& immediate) {
-		rt = rs + immediate;
-
-		/*
-		CL_CORE_INFO("{0} {1} {2}", rs, rt, immediate);*/
-		return rt;
-	}
-
-	int andiCallback(int& rt, int& rs, int& immediate) {
-		rt = rs & immediate;
-		return rt;
-	}
-
-	int oriCallback(int& rt, int& rs, int& immediate) {
-		rt = rs | immediate;
-		return rt;
-	}
-
-	int sltiCallback(int& rt, int& rs, int& immediate) {
-		rt = (rs < immediate) ? 1 : 0;
-		return rt;
-	}
-
-	/*
-	The BEQ instruction branches the PC if the first source register's contents and the second source
-	register's contents are equal.
-
-	It's syntax is:
-	BEQ $first source register's address, $second source register's address, branch value.
-	*/
-	int beqCallback(int& rt, int& rs, int& immediate) {
-		Memory::SetPC((rs == rt) ? immediate  : Memory::GetPC());
-		return MIPSLayer::PC;
-	}
-
-	int bneCallback(int& rt, int& rs, int& immediate) {
-		Memory::SetPC((rs != rt) ? immediate : Memory::GetPC());
-		return MIPSLayer::PC;
-	}
-
-	/*
-	The LW instruction loads data from the data memory through a specified address, with a possible offset, to the
-	destination register.
-
-	It's syntax is:
-	LW $destination register's address, offset($source register's address).
-	*/
-
-	int lwCallback(int& rt, int& rs, int& immediate) {
-		bool check = false;
-		rt = Memory::GetDataMemoryValue(rs + immediate, check);
-		return rt;
-	}
-
-	int swCallback(int& rt, int& rs, int& immediate) {
-		Memory::DataMemoryInsert(string_format("%X", rs + immediate), (0xff & rt), rs + immediate);
-		return rt;
-	}
-
-	int luiCallback(int& rt, int& rs, int& immediate) {
-		rt = immediate << 16;
-		return rt;
-	}
-
-	int lbCallback(int& rt, int& rs, int& immediate) {
-		bool check = false;
-		rt = Memory::GetDataMemoryValue(rs + immediate, check);
-		return rt;
-	}
-
-	int sbCallback(int& rt, int& rs, int& immediate) {
-		Memory::DataMemoryInsert(string_format("%X", rs + immediate), (0xff & rt), rs + immediate);
-		return (0xff & rt);
-	}
-
-	int jCallback(int& address) {
-		Memory::SetPC(address);
-		return address;
-	}
-
-	int jalCallback(int& address) {
-		MIPS::GetRegisterUMap()["$ra"]->getRef() += Memory::GetPC() + 4;
-		Memory::SetPC(address);
-		return address;
-	}
-
-
+	
 	void MIPS::InitInstructionMap() {
 
-		m_InstructionUMap["add"] = new InstructionFormatR("add", 0x0, 0x20, MIPSLayer::addCallback);
-		m_InstructionUMap["sub"] = new InstructionFormatR("sub", 0x0, 0x22, MIPSLayer::subCallback);
-		m_InstructionUMap["and"] = new InstructionFormatR("and", 0x0, 0x24, MIPSLayer::andCallback);
-		m_InstructionUMap["or"] = new InstructionFormatR("or", 0x0, 0x25, MIPSLayer::orCallback);
-		m_InstructionUMap["slt"] = new InstructionFormatR("slt", 0x0, 0x2A, MIPSLayer::sltCallback);
-		m_InstructionUMap["jr"] = new InstructionFormatR("jr", 0x0, 0x08, MIPSLayer::jrCallback);
-		m_InstructionUMap["sll"] = new InstructionFormatR("sll", 0x0, 0x00, MIPSLayer::sllCallback);
-		m_InstructionUMap["srl"] = new InstructionFormatR("srl", 0x0, 0x02, MIPSLayer::srlCallback);
-		m_InstructionUMap["mult"] = new  InstructionFormatR("mul", 0x0, 0x00, MIPSLayer::mulCallback);
-		m_InstructionUMap["addi"] = new InstructionFormatI("addi", 0x8, MIPSLayer::addiCallback);
-		m_InstructionUMap["andi"] = new InstructionFormatI("andi", 0xC, MIPSLayer::andiCallback);
-		m_InstructionUMap["ori"] = new InstructionFormatI("ori", 0xD, MIPSLayer::oriCallback);
-		m_InstructionUMap["slti"] = new InstructionFormatI("slti", 0xA, MIPSLayer::sltiCallback);
-		m_InstructionUMap["beq"] = new InstructionFormatI("beq", 0x4, MIPSLayer::beqCallback);
-		m_InstructionUMap["bne"] = new InstructionFormatI("bne", 0x5, MIPSLayer::bneCallback);
-		m_InstructionUMap["lui"] = new InstructionFormatI("lui", 0xF, MIPSLayer::luiCallback);
-		m_InstructionUMap["lw"] = new InstructionFormatI("lw", 0x23, MIPSLayer::lwCallback);
-		m_InstructionUMap["sw"] = new InstructionFormatI("sw", 0x2B, MIPSLayer::swCallback);
-		m_InstructionUMap["lb"] = new InstructionFormatI("lb", 0x20, MIPSLayer::lbCallback);
-		m_InstructionUMap["sb"] = new InstructionFormatI("sb", 0x28, MIPSLayer::sbCallback);
-		m_InstructionUMap["jal"] = new InstructionFormatJ("jal", 0x3, MIPSLayer::jalCallback);
-		m_InstructionUMap["j"] = new InstructionFormatJ("j", 0x2, MIPSLayer::jCallback);
+		m_InstructionUMap["add"] = new InstructionFormatR("add", 0x0, 0x20, addCallback);
+		m_InstructionUMap["sub"] = new InstructionFormatR("sub", 0x0, 0x22, subCallback);
+		m_InstructionUMap["and"] = new InstructionFormatR("and", 0x0, 0x24, andCallback);
+		m_InstructionUMap["or"] = new InstructionFormatR("or", 0x0, 0x25, orCallback);
+		m_InstructionUMap["slt"] = new InstructionFormatR("slt", 0x0, 0x2A, sltCallback);
+		m_InstructionUMap["jr"] = new InstructionFormatR("jr", 0x0, 0x08, jrCallback);
+		m_InstructionUMap["sll"] = new InstructionFormatR("sll", 0x0, 0x00, sllCallback);
+		m_InstructionUMap["srl"] = new InstructionFormatR("srl", 0x0, 0x02, srlCallback);
+		m_InstructionUMap["mult"] = new  InstructionFormatR("mul", 0x0, 0x00, mulCallback);
+		m_InstructionUMap["addi"] = new InstructionFormatI("addi", 0x8, addiCallback);
+		m_InstructionUMap["andi"] = new InstructionFormatI("andi", 0xC, andiCallback);
+		m_InstructionUMap["ori"] = new InstructionFormatI("ori", 0xD, oriCallback);
+		m_InstructionUMap["slti"] = new InstructionFormatI("slti", 0xA, sltiCallback);
+		m_InstructionUMap["beq"] = new InstructionFormatI("beq", 0x4, beqCallback);
+		m_InstructionUMap["bne"] = new InstructionFormatI("bne", 0x5, bneCallback);
+		m_InstructionUMap["lui"] = new InstructionFormatI("lui", 0xF, luiCallback);
+		m_InstructionUMap["lw"] = new InstructionFormatI("lw", 0x23, lwCallback);
+		m_InstructionUMap["sw"] = new InstructionFormatI("sw", 0x2B, swCallback);
+		m_InstructionUMap["lb"] = new InstructionFormatI("lb", 0x20, lbCallback);
+		m_InstructionUMap["sb"] = new InstructionFormatI("sb", 0x28, sbCallback);
+		m_InstructionUMap["jal"] = new InstructionFormatJ("jal", 0x3, jalCallback);
+		m_InstructionUMap["j"] = new InstructionFormatJ("j", 0x2, jCallback);
 	}
 
 

@@ -5,35 +5,10 @@
 #include "AssemblyCore/Instruction.h"
 #include "AssemblyCore/Registers.h"
 #include "Core.h"
+#include "ExecutionTable.h"
 namespace MIPSLayer {
-	typedef int ErrorFlag;
-
-	enum ErrorFlag_ {
-		Error_None = 0,
-		Segment_Start = BIT(1),
-		Segment_Duplicate = BIT(2),
-		Instruction_Start = BIT(3),
-		Incompleted_Label = BIT(4),
-		Label_Duplicate= BIT(5),
-		Non_Exist_Label= BIT(6),
-		Numeric_Value = BIT(7),
-		Register_Value = BIT(8),
-		Insufficient_Instruction = BIT(9),
-		DataMemory_Too_Many_Args = BIT(10),
-		DataMemory_Too_Few_Args = BIT(11),
-		DataMemory_Invalid_Arg = BIT(12),
-
-	};
-	
 	class MIPS { // Singleton
 	public: 
-		struct ExecutionTable { // Focus on that
-			int address;
-			std::string instruction;
-			std::vector<std::reference_wrapper<int>> datas;
-			int immediate;
-			std::vector<int> registerNames;
-		};
 		MIPS(const MIPS&) = delete;
 		
 		static MIPS& Get() {
