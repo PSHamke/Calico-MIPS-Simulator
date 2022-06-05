@@ -1,6 +1,6 @@
 #include "RegisterView.h"
 #include "Log.h"
-#include "Registers.h"
+#include "AssemblyCore/Registers.h"
 #include "bitset"
 #include "HelperString.h"
 #include "MipsLayer.h"
@@ -19,7 +19,7 @@ void RegisterView::Render()
 {
 	static ImGuiTableFlags flags = ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV | ImGuiTableFlags_Hideable;
 	float	TEXT_BASE_HEIGHT = ImGui::GetTextLineHeightWithSpacing();
-	RegisterInfos *regInfos = Register::GetRegisterInfos();
+	RegisterInfos *regInfos = Register::GetRegisterInfos32();
 	std::string HeaderStr[3] = { "[DEC]", "[HEX]","[BIN]" };
 	int registerValue = 0;
 	ImVec4 activeRegister(0.0f, 0.1f, 1.0f, 1.0f);

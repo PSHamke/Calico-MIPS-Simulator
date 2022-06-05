@@ -34,7 +34,8 @@ public:
 	registerStatus getStatus() {
 		return m_Status;
 	}
-	static RegisterInfos* GetRegisterInfos();
+	static RegisterInfos* GetRegisterInfos32();
+	static RegisterInfos* GetRegisterInfos16();
 private:
 	std::string m_Name;
 	uint8_t m_Number;

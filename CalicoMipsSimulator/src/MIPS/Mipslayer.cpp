@@ -199,9 +199,6 @@ namespace MIPSLayer {
 	}
 
 
-
-
-
 	void MIPS::InitRegistersMap()
 	{
 		m_RegisterUMap["$zero"] = new Register("zero", 0, NULL, registerStatus::free);
@@ -744,6 +741,7 @@ namespace MIPSLayer {
 			if (m_ExecutionTable[Memory::GetPC()].instruction == "label") {
 				Memory::SetPC(Memory::GetPC() + 1);
 				CL_CORE_INFO("Label here {0}",Memory::GetPC());
+				Memory::SetVirtualPC(Memory::GetVirtualPC() + 1);
 				continue;
 			}
 			m_InstructionUMap[m_ExecutionTable[Memory::GetPC()].instruction]->Execute(m_ExecutionTable[Memory::GetPC()].datas,

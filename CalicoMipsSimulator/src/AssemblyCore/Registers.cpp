@@ -1,5 +1,5 @@
 #include "Registers.h"
-RegisterInfos* Register::GetRegisterInfos()
+RegisterInfos* Register::GetRegisterInfos32()
 {
 	RegisterInfos* registerInfos = new RegisterInfos();
 	registerInfos->push_back(std::make_pair("$zero", "The Constant Value 0"));
@@ -34,5 +34,19 @@ RegisterInfos* Register::GetRegisterInfos()
 	registerInfos->push_back(std::make_pair("$sp", "Stack Pointer"));
 	registerInfos->push_back(std::make_pair("$fp", "Frame Pointer"));
 	registerInfos->push_back(std::make_pair("$ra", "Return Address"));
+	return registerInfos;
+}
+
+RegisterInfos* Register::GetRegisterInfos16()
+{
+	RegisterInfos* registerInfos = new RegisterInfos();
+	registerInfos->push_back(std::make_pair("$zero", "The Constant Value 0"));
+	registerInfos->push_back(std::make_pair("$v0", "Values for Function Results and Expression Evaluation"));
+	registerInfos->push_back(std::make_pair("$t0", "Temporary Register"));
+	registerInfos->push_back(std::make_pair("$t1", "Temporary Register"));
+	registerInfos->push_back(std::make_pair("$t2", "Temporary Register"));
+	registerInfos->push_back(std::make_pair("$s0", "Saved Temporary Register"));
+	registerInfos->push_back(std::make_pair("$s1", "Saved Temporary Register"));
+	registerInfos->push_back(std::make_pair("$ra", "Return Address"));	
 	return registerInfos;
 }

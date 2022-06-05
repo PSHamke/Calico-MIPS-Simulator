@@ -29,7 +29,9 @@ project "CalicoMipsSimulator"
 	{
 		"%{prj.name}/src",
 		"%{prj.name}/src/MIPS",
-		"%{prj.name}/src/editor",
+		"%{prj.name}/src/Editor",
+		"%{prj.name}/src/AssemblyCore",
+		"%{prj.name}/src/Noble-16",
 		"%{prj.name}/vendor/spdlog/include",
 		"%{IncludeDir.ImGui}"
 		

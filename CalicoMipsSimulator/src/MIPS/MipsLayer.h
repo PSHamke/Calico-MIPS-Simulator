@@ -2,8 +2,8 @@
 #include <iostream>
 #include <unordered_map>
 #include <map>
-#include "Instruction.h"
-#include "Registers.h"
+#include "AssemblyCore/Instruction.h"
+#include "AssemblyCore/Registers.h"
 #include "Core.h"
 namespace MIPSLayer {
 	typedef int ErrorFlag;

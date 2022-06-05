@@ -45,7 +45,7 @@ void Menu::Render()
 		if (Settings::Tab == 1)
 		{
 			
-			if (ImGui::Button(ICON_FA_CHECK" Execute", ImVec2(115, 34))) {
+			if (ImGui::Button(ICON_FA_CHECK" Execute", ImVec2(124, 34))) {
 				Settings::ExecutePressed = !Settings::ExecutePressed;
 				
 			}
@@ -62,12 +62,14 @@ void Menu::Render()
 				
 			}
 			ImGui::SameLine();
-			if (ImGui::Button(ICON_FA_SQUARE" Step", ImVec2(115, 34))) {
-				Settings::LineCounter++;
+			if (ImGui::Button(ICON_FA_BACKWARD" Step", ImVec2(124, 34))) {
+				Settings::LineCounter--;
+				Memory::SetVirtualPC(0);
+				Memory::FreeTextMemory();
+				MIPSLayer::MIPS::ResetRegisterUMap();
+				Memory::SetPC(0);
 				if (Settings::LineCounter == 1) {
 					Memory::FreeTextMemory();
-					MIPSLayer::MIPS::ResetRegisterUMap();
-					
 					Memory::SetVirtualPC(0);
 					TextEditor::GetInstance("##COutputEditor")->SetText(
 						MIPSLayer::MIPS::ValidateInput(TextEditor::GetInstance("##MainEditor")->GetText(), TextEditor::GetInstance("##DataEditor")->GetText())
@@ -76,16 +78,39 @@ void Menu::Render()
 					MIPSLayer::MIPS::ResetRegisterUMap();
 					Settings::ExecCounter = 0;
 				}
-				MIPSLayer::MIPS::Execute(Settings::LineCounter-1);
+				
+				MIPSLayer::MIPS::Execute(Settings::LineCounter);
+				TextEditor::CurrentRunLine runLine;
+				runLine[Memory::GetPC()+1] = "";
+				CL_CORE_ERROR("For Marking PC {0} ", Memory::GetPC());
+				TextEditor::GetInstance("##MainEditor")->SetCurrentMarkers(runLine);
 			}
-			
-
-
-			
 			ImGui::SameLine();
+			if (ImGui::Button(ICON_FA_FORWARD" Step", ImVec2(124, 34))){
+				Settings::LineCounter++;
+				if (Settings::LineCounter == 1) {
+					Memory::FreeTextMemory();
+					MIPSLayer::MIPS::ResetRegisterUMap();
 
-			ImGui::SetCursorPosX(ImGui::GetCursorPosX() +imguipp::getx()-145); // Set Stop button place
-			if (ImGui::Button(ICON_FA_SQUARE" Stop", ImVec2(115, 34))) {
+					Memory::SetVirtualPC(0);
+					TextEditor::GetInstance("##COutputEditor")->SetText(
+						MIPSLayer::MIPS::ValidateInput(TextEditor::GetInstance("##MainEditor")->GetText(), TextEditor::GetInstance("##DataEditor")->GetText())
+					);
+					Memory::SetPC(0);
+					MIPSLayer::MIPS::ResetRegisterUMap();
+					Settings::ExecCounter = 0;
+				}
+
+				TextEditor::CurrentRunLine runLine;
+				runLine[Memory::GetPC()+1] = "";
+				CL_CORE_ERROR("For Marking PC {0} ", Memory::GetPC());
+				TextEditor::GetInstance("##MainEditor")->SetCurrentMarkers(runLine);
+				MIPSLayer::MIPS::Execute(Settings::LineCounter);
+			}
+			ImGui::SameLine();
+			
+			//ImGui::SetCursorPosX(ImGui::GetCursorPosX() +imguipp::getx()-145); // Set Stop button place
+			if (ImGui::Button(ICON_FA_SQUARE" Stop", ImVec2(124, 34))) {
 				Settings::ExecutePressed = 0;
 				Settings::ExecCounter = 0;
 				Settings::LineCounter = 0;
