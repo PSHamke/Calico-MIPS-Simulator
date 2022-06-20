@@ -19,6 +19,7 @@ namespace MIPSLayer {
 		static std::string ValidateInput(const std::string& data, const std::string& dataMem) {
 			return Get().IValidateInput(data, dataMem);
 		}
+	
 		static void Execute(int pStep) {
 			return Get().IExecute(pStep);
 		}

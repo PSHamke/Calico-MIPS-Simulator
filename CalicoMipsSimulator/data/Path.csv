@@ -1,0 +1,3 @@
+Index;Name;ID;PolyCount;Point1X;Point1Y;Point2X;Point2Y;Color;Thickness;Flag;
+1;Mux;1;2;60.25f;460.0f;30.0f;460.f;0.0f;1.0f;0f;
+2;Mux;1;2;30.0f;40.0f;1171.15f;45.15f;0.0f;1.0f;0f;

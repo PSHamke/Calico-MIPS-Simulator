@@ -16,6 +16,7 @@ public:
 	MemoryView();
 	~MemoryView();
 	void Render(RenderType rType, MemoryType mType );
+	void Render16Bit(RenderType rType, MemoryType mType );
 
 	static MemoryView* CreateInstance(const std::string& pInstanceID, unsigned int flag = 0);
 	static MemoryView* GetInstance(const std::string& pInstanceID);
@@ -37,4 +38,6 @@ private:
 	MemoryType mType;
 	void RenderHex();
 	void RenderBinary();
+	void Render16BitHex();
+	void Render16BitBinary();
 };

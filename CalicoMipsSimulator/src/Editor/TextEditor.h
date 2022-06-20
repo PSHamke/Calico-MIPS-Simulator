@@ -198,6 +198,7 @@ public:
 		static const LanguageDefinition& AngelScript();
 		static const LanguageDefinition& Lua();
 		static const LanguageDefinition& MIPS();
+		static const LanguageDefinition& Noble16();
 	};
 
 	TextEditor();

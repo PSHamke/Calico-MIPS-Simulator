@@ -33,8 +33,8 @@ JR $first source register's address
 */
 int jrCallback(int& rd, int& rs, int& rt, unsigned int shamt) {
 
-	Memory::SetPC(rs);
-	return rs;
+	Memory::SetPC(rd);
+	return rd;
 }
 
 /*
@@ -121,9 +121,13 @@ int lwCallback(int& rt, int& rs, int& immediate) {
 
 int swCallback(int& rt, int& rs, int& immediate) {
 	Memory::DataMemoryInsert(string_format("%X", rs + immediate), (0xff & rt), rs + immediate);
+	CL_CORE_INFO("Mem Insert address {0} value {1}", rs + immediate, rt);
 	return rt;
 }
-
+int muliCallback(int& rt, int& rs, int& immediate) {
+	rt = rs * immediate;
+	return rt;
+}
 int luiCallback(int& rt, int& rs, int& immediate) {
 	rt = immediate << 16;
 	return rt;

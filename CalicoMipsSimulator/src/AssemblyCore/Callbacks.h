@@ -19,6 +19,7 @@ int beqCallback(int& rt, int& rs, int& immediate);
 int bneCallback(int& rt, int& rs, int& immediate);
 int lwCallback(int& rt, int& rs, int& immediate);
 int swCallback(int& rt, int& rs, int& immediate);
+int muliCallback(int& rt, int& rs, int& immediate);
 int luiCallback(int& rt, int& rs, int& immediate);
 int lbCallback(int& rt, int& rs, int& immediate);
 int sbCallback(int& rt, int& rs, int& immediate);

@@ -8,43 +8,48 @@
 #include "HelperString.h"
 #include "settings.h"
 #include "MipsLayer.h"
+#include "NobleLayer.h"
+#include "DataControlPath/ImDrawer.h"
 extern ImFont* Consolas;
 
-void mWorker() {
-	
-}
+
 void Menu::Render()
 {
-	ImGui::Columns(3);
+	ImGui::Columns(4);
 	ImGui::SetColumnOffset(1, 230);
-	
+	//First Column
 	{
 		//Left side
 		static ImVec4 active = imguipp::to_vec4(41, 40, 41, 255);
 		static ImVec4 inactive = imguipp::to_vec4(31, 30, 31, 255);
 
 		ImGui::PushStyleColor(ImGuiCol_Button, Settings::Tab == 1 ? active : inactive);
-		if (ImGui::Button(ICON_FA_CODE " Executor", ImVec2(230 - 15, 41)))
+		if (ImGui::Button(ICON_FA_CODE " MIPS-32", ImVec2(230 - 15, 41)))
 			Settings::Tab = 1;
 
 		ImGui::Spacing();
 		ImGui::PushStyleColor(ImGuiCol_Button, Settings::Tab == 2 ? active : inactive);
-		if (ImGui::Button(ICON_FA_DOWNLOAD " Settings", ImVec2(230 - 15, 41)))
+		if (ImGui::Button(ICON_FA_CODE " NOBLE-16", ImVec2(230 - 15, 41)))
 			Settings::Tab = 2;
-		ImGui::PopStyleColor(2);
+		
+
+		ImGui::Spacing();
+		ImGui::PushStyleColor(ImGuiCol_Button, Settings::Tab == 3 ? active : inactive);
+		if (ImGui::Button(ICON_FA_CODE " NOBLE PATH", ImVec2(230 - 15, 41)))
+			Settings::Tab = 3;
+		ImGui::PopStyleColor(3);
 
 		ImGui::SetCursorPosY(ImGui::GetWindowHeight() - 40);
 		imguipp::center_text_ex("Calico|MIPS Simulator", 230, 1, false);
 	}
 	ImGui::NextColumn();
-	ImGui::SetColumnOffset(2, 765);
-	//Right side
+	//Second Column
 	{
 		
 		// Executor tab
 		if (Settings::Tab == 1)
 		{
-			
+			ImGui::SetColumnOffset(2, 765);
 			if (ImGui::Button(ICON_FA_CHECK" Execute", ImVec2(124, 34))) {
 				Settings::ExecutePressed = !Settings::ExecutePressed;
 				
@@ -140,15 +145,59 @@ void Menu::Render()
 			ImGui::Spacing();
 		}
 
-		// Dumper Tab
+		// Noble Tab
 		else if (Settings::Tab == 2)
 		{
-			
-		}		
+			ImGui::SetColumnOffset(2, 630);
+			if (ImGui::Button(ICON_FA_CHECK" Execute", ImVec2(188, 34))) {
+				Settings::ExecutePressed = !Settings::ExecutePressed;
+			}
+
+			if (Settings::ExecutePressed) {
+				//TextEditor::GetInstance("##NobleMainEditor")->SetReadOnly(true);
+				TextEditor::GetInstance("##NobleCOutputEditor")->SetText(
+					NobleLayer::Noble::ValidateInput(TextEditor::GetInstance("##NobleMainEditor")->GetText(),
+						TextEditor::GetInstance("##NobleDataEditor")->GetText(),4));
+				NobleLayer::Noble::Execute(-1);
+				TextEditor::GetInstance("##NobleOutputEditor")->SetText(string_format("Executed\nPC at 0X%.2X", 0x400000 + Memory::GetPC() * 4).c_str());
+				Settings::ExecutePressed = false;
+
+			}
+			ImGui::SameLine();
+			if (ImGui::Button(ICON_FA_COGS" Assemble", ImVec2(188, 34))) {
+				Settings::AssemblePressed = !Settings::AssemblePressed;
+				TextEditor::GetInstance("##NobleCOutputEditor")->SetText(
+					NobleLayer::Noble::ValidateInput(TextEditor::GetInstance("##NobleMainEditor")->GetText(),
+						TextEditor::GetInstance("##NobleDataEditor")->GetText(), 3));
+			}
+			ImGui::Spacing();
+			ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarRounding, 0);
+			ImGui::PushFont(Consolas);
+			TextEditor::GetInstance("##NobleMainEditor")->Render("##EditorWindow", ImVec2(imguipp::getx(), 700 * (0.64f)));
+			ImGui::PopFont();
+			ImGui::PopStyleVar();
+			//ImGui::Spacing();
+
+
+			//if (ImGui::Button(ICON_FA_FILE" Execute from file", ImVec2(200, 35))) {}
+
+			//ImGui::Spacing();
+			ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarRounding, 0);
+			ImGui::PushFont(Consolas);
+			TextEditor::GetInstance("##NobleDataEditor")->Render("##EditorWindow2", ImVec2(imguipp::getx(), 700 * (0.35f)));
+			ImGui::PopFont();
+			ImGui::PopStyleVar();
+			ImGui::Spacing();
+		}
+		else if (Settings::Tab == 3) {
+		ImGui::SetColumnOffset(2, 1300);
+			ImDrawer::SetDrawList(ImGui::GetWindowDrawList());
+			ImDrawer::Draw();
+		}
 	}
 
 	ImGui::NextColumn();
-	//ImGui::SetColumnOffset(3, 1300);
+	//Third Column
 	{
 		if (Settings::Tab == 1)
 		{
@@ -167,13 +216,13 @@ void Menu::Render()
 			ImGui::Spacing();	
 			ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarRounding, 0);
 			ImGui::PushFont(Consolas);
-			TextEditor::GetInstance("##COutputEditor")->Render("##COutputWindow", ImVec2(imguipp::getx(), 640 * (0.64f)));
+			TextEditor::GetInstance("##NobleCOutputEditor")->Render("##NobleCOutputWindow", ImVec2(imguipp::getx(), 640 * (0.64f)));
 			ImGui::PopFont();
 			ImGui::PopStyleVar();
 			ImGui::Spacing();
 			ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarRounding, 0);
 			ImGui::PushFont(Consolas);
-			TextEditor::GetInstance("##OutputEditor")->Render("##OutputWindow", ImVec2(imguipp::getx(), 640 * (0.345)));
+			TextEditor::GetInstance("##NobleOutputEditor")->Render("##NobleOutputWindow", ImVec2(imguipp::getx(), 640 * (0.345)));
 			ImGui::PopFont();
 			ImGui::PopStyleVar();
 			ImGui::Spacing();
@@ -206,8 +255,159 @@ void Menu::Render()
 				ImGui::End();
 			}
 		}
-	}
+		if (Settings::Tab == 2)
+		{
+			ImGui::SetColumnOffset(3, 1030);
+			
+			if (ImGui::Button(ICON_FA_BACKWARD" Step", ImVec2(122.5, 34))) {
+				Settings::LineCounter--;
+				Memory::SetVirtualPC(0);
+				NobleLayer::Noble::ResetRegisterUMap();
+				Memory::SetPC(0);
+				if (Settings::LineCounter == 1) {
+					Memory::FreeTextMemory();
+					Memory::SetVirtualPC(0);
+					/*TextEditor::GetInstance("##NobleCOutputEditor")->SetText(
+						NobleLayer::Noble::ValidateInput(TextEditor::GetInstance("##NobleMainEditor")->GetText(),
+							TextEditor::GetInstance("##NobleDataEditor")->GetText(),4)
+					);*/
+					Memory::SetPC(0);
+					NobleLayer::Noble::ResetRegisterUMap();
+					Settings::ExecCounter = 0;
+					
+				}
 
+				NobleLayer::Noble::Execute(Settings::LineCounter);
+				TextEditor::CurrentRunLine runLine;
+				runLine[Memory::GetPC() + 1] = "";
+				CL_CORE_ERROR("For Marking PC {0} ", Memory::GetPC());
+				TextEditor::GetInstance("##NobleMainEditor")->SetCurrentMarkers(runLine);
+				TextEditor::GetInstance("##NobleOutputEditor")->SetText(NobleLayer::Noble::GetOutputString().c_str());
+				CL_CORE_INFO("Noble Output str {0}", NobleLayer::Noble::GetOutputString().c_str());
+			}
+			ImGui::SameLine();
+
+			if (ImGui::Button(ICON_FA_FORWARD" Step", ImVec2(122.5, 34))) {
+				Settings::LineCounter++;
+				if (Settings::LineCounter == 1) {
+					NobleLayer::Noble::ResetRegisterUMap();
+					Memory::SetVirtualPC(0);
+					//TextEditor::GetInstance("##NobleCOutputEditor")->SetText(
+					//	NobleLayer::Noble::ValidateInput(
+					//		TextEditor::GetInstance("##NobleMainEditor")->GetText(),
+					//		TextEditor::GetInstance("##NobleDataEditor")->GetText(),4)); // Read only ins mem
+					Memory::SetPC(0);
+					NobleLayer::Noble::ResetRegisterUMap();
+					Settings::ExecCounter = 0;
+				}
+
+				TextEditor::CurrentRunLine runLine;
+				runLine[Memory::GetPC() + 1] = "";
+				CL_CORE_ERROR("For Marking PC {0} ", Memory::GetPC());
+				TextEditor::GetInstance("##NobleMainEditor")->SetCurrentMarkers(runLine);
+				NobleLayer::Noble::Execute(Settings::LineCounter);
+				TextEditor::GetInstance("##NobleOutputEditor")->SetText(NobleLayer::Noble::GetOutputString().c_str());
+				CL_CORE_INFO("Noble Output str {0}", NobleLayer::Noble::GetOutputString().c_str());
+			}
+			ImGui::SameLine();
+			if (ImGui::Button(ICON_FA_SQUARE" Stop", ImVec2(122.5, 34))) {
+				Settings::ExecutePressed = 0;
+				Settings::ExecCounter = 0;
+				Settings::LineCounter = 0;
+				NobleLayer::Noble::ResetRegisterUMap();
+				Memory::SetPC(0);
+				TextEditor::GetInstance("##NobleMainEditor")->SetReadOnly(false);
+				TextEditor::GetInstance("##NobleOutputEditor")->SetText("");
+				NobleLayer::Noble::ResetOutputBuffer();
+			}
+			//ImGui::SetCursorPosX(ImGui::GetCursorPosX() +imguipp::getx()-145); // Set Stop button place
+			/*if (ImGui::Button(ICON_FA_SQUARE" Stop", ImVec2(188, 34))) {
+				Settings::ExecutePressed = 0;
+				Settings::ExecCounter = 0;
+				Settings::LineCounter = 0;
+				Memory::SetPC(0);
+				TextEditor::GetInstance("##NobleMainEditor")->SetReadOnly(false);
+				TextEditor::GetInstance("##NobleOutputEditor")->SetText("");
+			}*/
+			/*if (ImGui::Button("Memory View", ImVec2(145, 34))) {
+				Settings::MemoryViewActive = !Settings::MemoryViewActive;
+			}
+			ImGui::SameLine();
+			ImGui::SetCursorPosX(ImGui::GetCursorPosX() + imguipp::getx() - 145);
+			if (ImGui::Button("Register View", ImVec2(145, 34))) {
+				Settings::RegisterViewActive = !Settings::RegisterViewActive;
+			}*/
+
+			ImGui::Spacing();
+			ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarRounding, 0);
+			ImGui::PushFont(Consolas);
+			TextEditor::GetInstance("##NobleCOutputEditor")->Render("##NobleCOutputWindow", ImVec2(imguipp::getx(), 700 * (0.64f)));
+			ImGui::PopFont();
+			ImGui::PopStyleVar();
+			ImGui::Spacing();
+			ImGui::PushStyleVar(ImGuiStyleVar_ScrollbarRounding, 0);
+			ImGui::PushFont(Consolas);
+			TextEditor::GetInstance("##NobleOutputEditor")->Render("##NobleOutputWindow", ImVec2(imguipp::getx(), 700 * (0.345)));
+			ImGui::PopFont();
+			ImGui::PopStyleVar();
+			ImGui::Spacing();
+
+
+		}
+	}
+	ImGui::NextColumn();
+	//Forth Column
+	{
+		if (Settings::Tab == 2) {
+
+			const char* viewType[2] = { "HEX", "BIN" };
+			const char* memoryTypes[2] = { "INS MEMORY","DATA MEMORY" };
+			
+
+			if (ImGui::Button(Settings::ViewType[Settings::ViewTypeCounter], ImVec2(370, 34))) {
+				Settings::ViewTypeCounter = (Settings::ViewTypeCounter + 1) % 2;
+				ImDrawer::SetDrawList(ImGui::GetWindowDrawList());
+				ImDrawer::SetScaleRatio(0.7f);
+				ImDrawer::Transform();
+			}
+			if (Settings::ViewTypeCounter == 1) {
+				ImDrawer::Draw();
+			}
+			if (Settings::ViewTypeCounter == 0) {
+				Settings::MemoryViewActive = true;
+			}
+
+			if (ImGui::Button(memoryTypes[Settings::MemoryKind], ImVec2(181, 30))) {
+				Settings::MemoryKind = (Settings::MemoryKind + 1) % 2;
+				CL_CORE_INFO("Button press {0}", Settings::MemoryKind);
+			}
+
+
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.1, 0.3, 0.2, 1));
+			ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.1, 0.3, 0.2, 1));
+			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.1, 0.3, 0.2, 1));
+			ImGui::PopStyleColor(3);
+			ImGui::SameLine();
+			if (ImGui::Button(string_format("MemoryView [%s]", viewType[Settings::MemoryViewType]).c_str(), ImVec2(181, 30))) {
+				Settings::MemoryViewType = (Settings::MemoryViewType + 1) % 2;
+			}
+
+
+			
+			if (Settings::MemoryViewActive) {
+
+				MemoryView::GetInstance("##NobleMainMemoryView")->Render16Bit(
+					Settings::MemoryViewType ? MemoryView::RenderType::Bin : MemoryView::RenderType::Hex,
+					Settings::MemoryKind ? MemoryView::MemoryType::Data : MemoryView::MemoryType::Text
+				);
+				ImGui::TextColored(ImVec4(1.0, 1.0, 1.0, 1.0), "Registers");
+				ImGui::Spacing();
+				RegisterView::GetInstance("##NobleMainRegisterView")->Render16Bit();
+			}
+
+		}
+		
+	}
 }
 
 void Menu::Theme()
@@ -215,7 +415,7 @@ void Menu::Theme()
 	ImGuiStyle* style = &ImGui::GetStyle();
 	// to do create spec class 
 	float aspectRatio = 16 /9.f;
-	float width = 1300.f;
+	float width = 1400.f;
 	float height = width / aspectRatio;
 	//std::cout << height << "\n";
 	style->WindowBorderSize = 0;

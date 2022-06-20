@@ -4,6 +4,7 @@
 #include "bitset"
 #include "HelperString.h"
 #include "MipsLayer.h"
+#include "NobleLayer.h"
 
 std::vector<RegisterView*> RegisterView::Instances;
 int valueState = 0;
@@ -33,8 +34,8 @@ void RegisterView::Render()
 		ImVec2(610, TEXT_BASE_HEIGHT * 20)
 	};
 	
-	ImGui::SetCursorPosX(( ImGui::GetWindowWidth()- outer_size[valueState].x) /2);
-	if (ImGui::BeginTable("table_scrolly", 3, flags, outer_size[valueState]))
+	//ImGui::SetCursorPosX(( ImGui::GetWindowWidth()- outer_size[valueState].x) /2);
+	if (ImGui::BeginTable("table_scrollya", 3, flags, outer_size[valueState]))
 	{
 
 		ImGui::TableSetupScrollFreeze(0, 1); // Make top row always visible
@@ -131,8 +132,130 @@ void RegisterView::Render()
 		}
 		ImGui::EndTable();
 	}
+	
+	delete regInfos;
+}
+
+void RegisterView::Render16Bit()
+{
+	static ImGuiTableFlags flags = ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV | ImGuiTableFlags_Hideable;
+	float	TEXT_BASE_HEIGHT = ImGui::GetTextLineHeightWithSpacing();
+	RegisterInfos* regInfos = Register::GetRegisterInfos16();
+	std::string HeaderStr[3] = { "[DEC]", "[HEX]","[BIN]" };
+	int registerValue = 0;
+	ImVec4 activeRegister(0.0f, 0.1f, 1.0f, 1.0f);
+	ImVec4 inactiveRegister(1.0f, 1.0f, 1.0f, 1.0f);
+	//ImGui::PushFont(mFont);
+	// When using ScrollX or ScrollY we need to specify a size for our table container!
+	// Otherwise by default the table will fit all available space, like a BeginChild() call.
+
+	ImVec2 outer_size[3] = { ImVec2(370, TEXT_BASE_HEIGHT * 9.f),
+		ImVec2(370, TEXT_BASE_HEIGHT * 9.f),
+		ImVec2(370, TEXT_BASE_HEIGHT * 9.f)
+	};
+
+
+	//ImGui::SetCursorPosX(( ImGui::GetWindowWidth()- outer_size[valueState].x) /2);
+	if (ImGui::BeginTable("register_table", 3, flags, outer_size[valueState]))
+	{
+
+		ImGui::TableSetupScrollFreeze(0, 1); // Make top row always visible
+		ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthFixed, TEXT_BASE_HEIGHT * 2);
+
+
+		ImGui::TableSetupColumn("Number", ImGuiTableColumnFlags_WidthFixed, TEXT_BASE_HEIGHT *3);
+
+
+
+		ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthFixed, TEXT_BASE_HEIGHT * 5 * (valueState + 1));
+		static bool column_selected[3] = {};
+
+
+		ImGui::TableNextRow(ImGuiTableRowFlags_Headers);
+		// A bit spagetti // Find Fix 
+		ImGui::TableSetColumnIndex(0);
+		const char* column_name = ImGui::TableGetColumnName(0); // Retrieve name passed to TableSetupColumn()
+		ImGui::PushID(0);
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+		ImGui::Text(column_name);
+		ImGui::PopStyleVar();
+		ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+		ImGui::PopID();
+
+		ImGui::TableSetColumnIndex(1);
+		column_name = ImGui::TableGetColumnName(1); // Retrieve name passed to TableSetupColumn()
+		ImGui::PushID(1);
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.1, 0.3, 0.2, 1));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.1, 0.3, 0.2, 1));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.1, 0.3, 0.2, 1));
+		if (ImGui::Button(string_format("N %s", HeaderStr[numberState].c_str()).c_str())) {
+			numberState = (numberState + 1) % 3;
+		}
+		ImGui::PopStyleColor(3);
+		ImGui::PopStyleVar();
+		ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+		ImGui::PopID();
+
+		ImGui::TableSetColumnIndex(2);
+		column_name = ImGui::TableGetColumnName(2); // Retrieve name passed to TableSetupColumn()
+		ImGui::PushID(2);
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.1, 0.3, 0.2, 1));
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.1, 0.3, 0.2, 1));
+		ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.1, 0.3, 0.2, 1));
+		if (ImGui::Button(string_format("Value %s", HeaderStr[valueState].c_str()).c_str())) {
+			valueState = (valueState + 1) % 3;
+		}
+		ImGui::PopStyleColor(3);
+		ImGui::PopStyleVar();
+		ImGui::SameLine(0.0f, ImGui::GetStyle().ItemInnerSpacing.x);
+		ImGui::PopID();
+		//CL_CORE_INFO("Num = {0}  Value = {1}", numberState, valueState);
+		// Demonstrate using clipper for large vertical lists
+		ImGuiListClipper clipper;
+		clipper.Begin(8);
+		while (clipper.Step())
+		{
+			for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; row++)
+			{
+				registerValue = NobleLayer::Noble::GetRegisterUMap()[regInfos->at(row).first.c_str()]->getValue();
+				ImGui::PushStyleColor(ImGuiCol_Text, registerValue ? activeRegister : inactiveRegister);
+				ImGui::TableNextRow();
+				ImGui::TableSetColumnIndex(0);
+				ImGui::Text("%s", regInfos->at(row).first.c_str()); // Register name
+				if (ImGui::IsItemHovered())
+					ImGui::SetTooltip("%s", regInfos->at(row).second.c_str());
+
+				ImGui::TableSetColumnIndex(1);
+				if (numberState == 0) {
+					ImGui::Text("%d", row);
+				}
+				else if (numberState == 1) {
+					ImGui::Text("0x%.2X", row);
+				}
+				else if (numberState == 2) {
+					ImGui::Text("0b%s", std::bitset<3>(row).to_string().c_str());
+				}
+
+				ImGui::TableSetColumnIndex(2);
+				if (valueState == 0) {
+					ImGui::Text("%d", registerValue);
+				}
+				else if (valueState == 1) {
+					ImGui::Text("0x%.4X", registerValue);
+				}
+				else if (valueState == 2) {
+					ImGui::Text("0b%s", std::bitset<16>(registerValue).to_string().c_str());
+				}
+				ImGui::PopStyleColor(1);
+			}
+		}
+		ImGui::EndTable();
+	}
 
 	delete regInfos;
+	//ImGui::PopFont();
 }
 
 RegisterView* RegisterView::CreateInstance(const std::string& pInstanceID, unsigned int flag)

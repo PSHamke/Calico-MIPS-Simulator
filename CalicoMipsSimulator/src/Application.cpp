@@ -83,7 +83,7 @@ void Application::Init()
 	io.Fonts->AddFontFromMemoryCompressedTTF(font_awesome_data, font_awesome_size, 19.0f, &icons_config, icons_ranges);
 	Consolas = io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\Consola.ttf", 17);
 	io.Fonts->AddFontDefault();	
-	Consolas2 = io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\Consola.ttf", 13);
+	Consolas2 = io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\Consola.ttf", 12);
 	
 
 	ImGuiStyle& style = ImGui::GetStyle();
@@ -253,6 +253,10 @@ bool InitEditors() {
 	TextEditor* cOutputEditor = TextEditor::CreateInstance("##COutputEditor");
 	TextEditor* outputEditor  = TextEditor::CreateInstance("##OutputEditor");
 	
+	TextEditor* mainEditorNoble = TextEditor::CreateInstance("##NobleMainEditor");
+	TextEditor* dataEditorNoble = TextEditor::CreateInstance("##NobleDataEditor");
+	TextEditor* cOutputEditorNoble = TextEditor::CreateInstance("##NobleCOutputEditor");
+	TextEditor* outputEditorNoble = TextEditor::CreateInstance("##NobleOutputEditor");
 
 	if (!(mainEditor && dataEditor && cOutputEditor && outputEditor)) {
 		return false;
@@ -263,6 +267,13 @@ bool InitEditors() {
 
 	RegisterView* registerView = RegisterView::CreateInstance("##MainRegisterView");
 	registerView->SetFont(Consolas2);
+
+	MemoryView* memoryViewNoble = MemoryView::CreateInstance("##NobleMainMemoryView");
+	memoryViewNoble->SetFont(Consolas2);
+
+	RegisterView* registerViewNoble = RegisterView::CreateInstance("##NobleMainRegisterView");
+	registerViewNoble->SetFont(Consolas2);
+	
 	
 	mainEditor->SetStartText(".text");
 	mainEditor->SetStartSegmentValue(0x4000000);
@@ -295,6 +306,39 @@ bool InitEditors() {
 	outputEditor->SetPalette(TextEditor::GetDarkPalette());
 	outputEditor->SetLanguageDefinition(TextEditor::LanguageDefinition::C());
 	outputEditor->SetFlag(Editor_No_LineNumbers | Editor_No_Cursor | Editor_No_LineHiglight);
+
+	mainEditorNoble->SetStartText(".text");
+	mainEditorNoble->SetStartSegmentValue(0x4000000);
+	mainEditorNoble->SetText("main:\n\t");
+	mainEditorNoble->SetShowWhitespaces(false);
+	mainEditorNoble->SetReadOnly(false);
+	mainEditorNoble->SetPalette(TextEditor::GetDarkPalette());
+	mainEditorNoble->SetLanguageDefinition(TextEditor::LanguageDefinition::Noble16());
+
+
+	dataEditorNoble->SetStartText(".data");
+	dataEditorNoble->SetStartSegmentValue(0x1001000);
+	dataEditorNoble->SetShowWhitespaces(false);
+	dataEditorNoble->SetReadOnly(false);
+	dataEditorNoble->SetPalette(TextEditor::GetDarkPalette());
+	dataEditorNoble->SetLanguageDefinition(TextEditor::LanguageDefinition::Noble16());
+
+
+	cOutputEditorNoble->SetStartText("C Output");
+	cOutputEditorNoble->SetStartSegmentValue(0x4000000);
+	cOutputEditorNoble->SetShowWhitespaces(false);
+	cOutputEditorNoble->SetReadOnly(true);
+	cOutputEditorNoble->SetPalette(TextEditor::GetDarkPalette());
+	cOutputEditorNoble->SetLanguageDefinition(TextEditor::LanguageDefinition::C());
+	cOutputEditorNoble->SetFlag(Editor_No_Cursor);
+	outputEditorNoble->SetStartText("Output");
+	outputEditorNoble->SetStartSegmentValue(0x1001000);
+	outputEditorNoble->SetShowWhitespaces(false);
+	outputEditorNoble->SetReadOnly(true);
+	outputEditorNoble->SetPalette(TextEditor::GetDarkPalette());
+	outputEditorNoble->SetLanguageDefinition(TextEditor::LanguageDefinition::C());
+	outputEditorNoble->SetFlag(Editor_No_LineNumbers | Editor_No_Cursor | Editor_No_LineHiglight);
+	
 	return true;
 
 }

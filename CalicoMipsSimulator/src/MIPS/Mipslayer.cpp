@@ -7,15 +7,6 @@
 #include "Log.h"
 #include "Callbacks.h"
 
-//-add*, sub*, and*, or* , addi**, andi**, ori**
-//
-//- slt*, slti**, j***, jr*
-//
-//- jal***, sll*, srl*, beq**, bne**
-//
-//- mul?, muli?, lui**
-//
-//- lw**, sw**, lb**, sb**
 
 namespace MIPSLayer {
 
@@ -25,97 +16,67 @@ namespace MIPSLayer {
 	
 	void MIPS::InitInstructionMap() {
 
-		m_InstructionUMap["add"] = new InstructionFormatR("add", 0x0, 0x20, addCallback);
-		m_InstructionUMap["sub"] = new InstructionFormatR("sub", 0x0, 0x22, subCallback);
-		m_InstructionUMap["and"] = new InstructionFormatR("and", 0x0, 0x24, andCallback);
-		m_InstructionUMap["or"] = new InstructionFormatR("or", 0x0, 0x25, orCallback);
-		m_InstructionUMap["slt"] = new InstructionFormatR("slt", 0x0, 0x2A, sltCallback);
-		m_InstructionUMap["jr"] = new InstructionFormatR("jr", 0x0, 0x08, jrCallback);
-		m_InstructionUMap["sll"] = new InstructionFormatR("sll", 0x0, 0x00, sllCallback);
-		m_InstructionUMap["srl"] = new InstructionFormatR("srl", 0x0, 0x02, srlCallback);
+		m_InstructionUMap["add"]  = new InstructionFormatR("add", 0x0, 0x20, addCallback);
+		m_InstructionUMap["sub"]  = new InstructionFormatR("sub", 0x0, 0x22, subCallback);
+		m_InstructionUMap["and"]  = new InstructionFormatR("and", 0x0, 0x24, andCallback);
+		m_InstructionUMap["or"]   = new InstructionFormatR("or", 0x0, 0x25, orCallback);
+		m_InstructionUMap["slt"]  = new InstructionFormatR("slt", 0x0, 0x2A, sltCallback);
+		m_InstructionUMap["jr"]   = new InstructionFormatR("jr", 0x0, 0x08, jrCallback);
+		m_InstructionUMap["sll"]  = new InstructionFormatR("sll", 0x0, 0x00, sllCallback);
+		m_InstructionUMap["srl"]  = new InstructionFormatR("srl", 0x0, 0x02, srlCallback);
 		m_InstructionUMap["mult"] = new  InstructionFormatR("mul", 0x0, 0x00, mulCallback);
 		m_InstructionUMap["addi"] = new InstructionFormatI("addi", 0x8, addiCallback);
 		m_InstructionUMap["andi"] = new InstructionFormatI("andi", 0xC, andiCallback);
-		m_InstructionUMap["ori"] = new InstructionFormatI("ori", 0xD, oriCallback);
+		m_InstructionUMap["ori"]  = new InstructionFormatI("ori", 0xD, oriCallback);
 		m_InstructionUMap["slti"] = new InstructionFormatI("slti", 0xA, sltiCallback);
-		m_InstructionUMap["beq"] = new InstructionFormatI("beq", 0x4, beqCallback);
-		m_InstructionUMap["bne"] = new InstructionFormatI("bne", 0x5, bneCallback);
-		m_InstructionUMap["lui"] = new InstructionFormatI("lui", 0xF, luiCallback);
-		m_InstructionUMap["lw"] = new InstructionFormatI("lw", 0x23, lwCallback);
-		m_InstructionUMap["sw"] = new InstructionFormatI("sw", 0x2B, swCallback);
-		m_InstructionUMap["lb"] = new InstructionFormatI("lb", 0x20, lbCallback);
-		m_InstructionUMap["sb"] = new InstructionFormatI("sb", 0x28, sbCallback);
-		m_InstructionUMap["jal"] = new InstructionFormatJ("jal", 0x3, jalCallback);
-		m_InstructionUMap["j"] = new InstructionFormatJ("j", 0x2, jCallback);
+		m_InstructionUMap["beq"]  = new InstructionFormatI("beq", 0x4, beqCallback);
+		m_InstructionUMap["bne"]  = new InstructionFormatI("bne", 0x5, bneCallback);
+		m_InstructionUMap["lui"]  = new InstructionFormatI("lui", 0xF, luiCallback);
+		m_InstructionUMap["lw"]   = new InstructionFormatI("lw", 0x23, lwCallback);
+		m_InstructionUMap["sw"]   = new InstructionFormatI("sw", 0x2B, swCallback);
+		m_InstructionUMap["lb"]   = new InstructionFormatI("lb", 0x20, lbCallback);
+		m_InstructionUMap["sb"]   = new InstructionFormatI("sb", 0x28, sbCallback);
+		m_InstructionUMap["jal"]  = new InstructionFormatJ("jal", 0x3, jalCallback);
+		m_InstructionUMap["j"]    = new InstructionFormatJ("j", 0x2, jCallback);
 	}
 
 
 	void MIPS::InitRegistersMap()
 	{
 		m_RegisterUMap["$zero"] = new Register("zero", 0, NULL, registerStatus::free);
-		m_RegisterUMap["$at"] = new Register("at", 1, NULL, registerStatus::free);
-		m_RegisterUMap["$v0"] = new Register("v0", 2, NULL, registerStatus::free);
-		m_RegisterUMap["$v1"] = new Register("v1", 3, NULL, registerStatus::free);
-		m_RegisterUMap["$a0"] = new Register("a0", 4, NULL, registerStatus::free);
-		m_RegisterUMap["$a1"] = new Register("a1", 5, NULL, registerStatus::free);
-		m_RegisterUMap["$a2"] = new Register("a2", 6, NULL, registerStatus::free);
-		m_RegisterUMap["$a3"] = new Register("a3", 7, NULL, registerStatus::free);
-		m_RegisterUMap["$t0"] = new Register("t0", 8, NULL, registerStatus::free);
-		m_RegisterUMap["$t1"] = new Register("t1", 9, NULL, registerStatus::free);
-		m_RegisterUMap["$t2"] = new Register("t2", 10, NULL, registerStatus::free);
-		m_RegisterUMap["$t3"] = new Register("t3", 11, NULL, registerStatus::free);
-		m_RegisterUMap["$t4"] = new Register("t4", 12, NULL, registerStatus::free);
-		m_RegisterUMap["$t5"] = new Register("t5", 13, NULL, registerStatus::free);
-		m_RegisterUMap["$t6"] = new Register("t6", 14, NULL, registerStatus::free);
-		m_RegisterUMap["$t7"] = new Register("t7", 15, NULL, registerStatus::free);
-		m_RegisterUMap["$s0"] = new Register("s0", 16, NULL, registerStatus::free);
-		m_RegisterUMap["$s1"] = new Register("s1", 17, NULL, registerStatus::free);
-		m_RegisterUMap["$s2"] = new Register("s2", 18, NULL, registerStatus::free);
-		m_RegisterUMap["$s3"] = new Register("s3", 19, NULL, registerStatus::free);
-		m_RegisterUMap["$s4"] = new Register("s4", 20, NULL, registerStatus::free);
-		m_RegisterUMap["$s5"] = new Register("s5", 21, NULL, registerStatus::free);
-		m_RegisterUMap["$s6"] = new Register("s6", 22, NULL, registerStatus::free);
-		m_RegisterUMap["$s7"] = new Register("s7", 23, NULL, registerStatus::free);
-		m_RegisterUMap["$t8"] = new Register("t8", 24, NULL, registerStatus::free);
-		m_RegisterUMap["$t9"] = new Register("t9", 25, NULL, registerStatus::free);
-		m_RegisterUMap["$k0"] = new Register("k0", 26, NULL, registerStatus::free);
-		m_RegisterUMap["$k1"] = new Register("k1", 27, NULL, registerStatus::free);
-		m_RegisterUMap["$gp"] = new Register("gp", 28, NULL, registerStatus::free);
-		m_RegisterUMap["$sp"] = new Register("sp", 29, NULL, registerStatus::free);
-		m_RegisterUMap["$fp"] = new Register("fp", 30, NULL, registerStatus::free);
-		m_RegisterUMap["$ra"] = new Register("ra", 31, NULL, registerStatus::free);
+		m_RegisterUMap["$at"]   = new Register("at", 1, NULL, registerStatus::free);
+		m_RegisterUMap["$v0"]   = new Register("v0", 2, NULL, registerStatus::free);
+		m_RegisterUMap["$v1"]   = new Register("v1", 3, NULL, registerStatus::free);
+		m_RegisterUMap["$a0"]   = new Register("a0", 4, NULL, registerStatus::free);
+		m_RegisterUMap["$a1"]   = new Register("a1", 5, NULL, registerStatus::free);
+		m_RegisterUMap["$a2"]   = new Register("a2", 6, NULL, registerStatus::free);
+		m_RegisterUMap["$a3"]   = new Register("a3", 7, NULL, registerStatus::free);
+		m_RegisterUMap["$t0"]   = new Register("t0", 8, NULL, registerStatus::free);
+		m_RegisterUMap["$t1"]   = new Register("t1", 9, NULL, registerStatus::free);
+		m_RegisterUMap["$t2"]   = new Register("t2", 10, NULL, registerStatus::free);
+		m_RegisterUMap["$t3"]   = new Register("t3", 11, NULL, registerStatus::free);
+		m_RegisterUMap["$t4"]   = new Register("t4", 12, NULL, registerStatus::free);
+		m_RegisterUMap["$t5"]   = new Register("t5", 13, NULL, registerStatus::free);
+		m_RegisterUMap["$t6"]   = new Register("t6", 14, NULL, registerStatus::free);
+		m_RegisterUMap["$t7"]   = new Register("t7", 15, NULL, registerStatus::free);
+		m_RegisterUMap["$s0"]   = new Register("s0", 16, NULL, registerStatus::free);
+		m_RegisterUMap["$s1"]   = new Register("s1", 17, NULL, registerStatus::free);
+		m_RegisterUMap["$s2"]   = new Register("s2", 18, NULL, registerStatus::free);
+		m_RegisterUMap["$s3"]   = new Register("s3", 19, NULL, registerStatus::free);
+		m_RegisterUMap["$s4"]   = new Register("s4", 20, NULL, registerStatus::free);
+		m_RegisterUMap["$s5"]   = new Register("s5", 21, NULL, registerStatus::free);
+		m_RegisterUMap["$s6"]   = new Register("s6", 22, NULL, registerStatus::free);
+		m_RegisterUMap["$s7"]   = new Register("s7", 23, NULL, registerStatus::free);
+		m_RegisterUMap["$t8"]   = new Register("t8", 24, NULL, registerStatus::free);
+		m_RegisterUMap["$t9"]   = new Register("t9", 25, NULL, registerStatus::free);
+		m_RegisterUMap["$k0"]   = new Register("k0", 26, NULL, registerStatus::free);
+		m_RegisterUMap["$k1"]   = new Register("k1", 27, NULL, registerStatus::free);
+		m_RegisterUMap["$gp"]   = new Register("gp", 28, NULL, registerStatus::free);
+		m_RegisterUMap["$sp"]   = new Register("sp", 29, NULL, registerStatus::free);
+		m_RegisterUMap["$fp"]   = new Register("fp", 30, NULL, registerStatus::free);
+		m_RegisterUMap["$ra"]   = new Register("ra", 31, NULL, registerStatus::free);
 	}
 
-
-
-	std::vector<std::string> tokenizeMyString(const std::string& s, const std::string& del)
-	{
-		const int dictSize = 256;
-		static bool dict[dictSize] = { false };
-
-		std::vector<std::string> res;
-		for (int i = 0; i < del.size(); ++i) {
-			dict[del[i]] = true;
-		}
-
-		std::string token("");
-		for (auto& i : s) {
-			if (dict[i]) {
-				if (!token.empty()) {
-					res.push_back(token);
-					token.clear();
-				}
-			}
-			else {
-				token += i;
-			}
-		}
-		if (!token.empty()) {
-			CL_CORE_INFO("Token = {}", token);
-			res.push_back(token);
-		}
-		return res;
-	}
 
 	bool isSegmentInstruction(const std::string& token) {
 
@@ -130,7 +91,7 @@ namespace MIPSLayer {
 		return false;
 	}
 
-	std::string createCOutput(std::vector<std::string> data, int argCount, int instructionCode, int functCode) {
+	std::string CreateCOutput(std::vector<std::string> data, int argCount, int instructionCode, int functCode) {
 		std::string result = "";
 		if (functCode == -1) {
 			switch (instructionCode) {
@@ -209,14 +170,13 @@ namespace MIPSLayer {
 		}
 		return result;
 	}
-
+	
 	std::string MIPS::IValidateInput(const std::string& aData, const std::string& memData)
 	{
 		// Be sure that only 1 line of code passed here at a time 
 		std::string c_OutputResult = "";
 		std::string delimiter = "\n";
 		std::string data = aData;
-		std::cout << "Initial Data: " << data << " END\n";
 		size_t pos = 0;
 		std::vector<std::pair<std::string, int>> Lines;
 		std::vector<std::vector<std::string>> Tokens;
@@ -254,11 +214,10 @@ namespace MIPSLayer {
 			charCheck(it.first, check); // Correct comma error
 
 			if (!check) {
-				std::cout << "Comma Error at line = " << it.second << "\n";
-				// Do error in GUI 
+				//std::cout << "Comma Error at line = " << it.second << "\n";
 			}
 
-			Tokens.push_back(tokenizeMyString(it.first, " ,"));
+			Tokens.push_back(TokenizeMyString(it.first, " ,"));
 		}
 
 		
@@ -269,8 +228,10 @@ namespace MIPSLayer {
 		ErrorFlag errorflag = Error_None;
 		// First find all labels construct label map, then investigate instructions 
 		int TokenizedLineCount = 0;
+		
 		for (auto& token : Tokens) 
 			IValidateLabel(token.at(0), TokenizedLineCount++, errorflag);
+		
 		// Should check all labels first 
 		ExecutionTable temp1;
 		TokenizedLineCount = 0;
@@ -278,7 +239,6 @@ namespace MIPSLayer {
 			errorflag = Error_None;
 			switch (token.size()) {
 			case 1:
-				
 				temp1.address = TokenizedLineCount;
 				temp1.instruction = "label";
 				m_ExecutionTable.push_back(temp1);		
@@ -308,7 +268,6 @@ namespace MIPSLayer {
 			m_CResultMap[TokenizedLineCount] = string_format("\t%s\n}", "return 0;");
 		return IConstructCResult();
 	}
-
 	std::map<int, std::string> DataMemoryHandler(const std::string& aText) {
 
 		std::map<int, std::string> resultMap;
@@ -411,8 +370,8 @@ namespace MIPSLayer {
 			}
 			else {
 				m_CResultMap[pCurrentLine] = string_format("int main(void) { ");
-				m_CResultMap[pCurrentLine] = pInput;
 				m_SegmentStart = true;
+				CL_CORE_INFO("Main label detected and inserted!");
 			}
 		}
 		else if (pInput.back() == ':') { // Make sure its a label and ended with ':' 
@@ -424,6 +383,7 @@ namespace MIPSLayer {
 			else {
 				m_CResultMap[pCurrentLine] = pInput; // have a look at  // seems nice 
 			}
+			CL_CORE_INFO("Main again label detected and inserted!");
 		}
 		else {
 			pErrorFlag |= Incompleted_Label;
@@ -553,7 +513,7 @@ namespace MIPSLayer {
 				temp.instruction = pInput.at(0);
 				temp.registerNames = vecRegisterNames;
 				m_ExecutionTable.push_back(temp);
-				m_CResultMap[pCurrentLine] = string_format("\t%s", createCOutput(pInput, expectedArguments.size(), m_InstructionUMap[pInput.at(0)]->getOpcode(), m_InstructionUMap[pInput.at(0)]->getFunct()).c_str());
+				m_CResultMap[pCurrentLine] = string_format("\t%s", CreateCOutput(pInput, expectedArguments.size(), m_InstructionUMap[pInput.at(0)]->getOpcode(), m_InstructionUMap[pInput.at(0)]->getFunct()).c_str());
 			}
 			else {
 				if (pErrorFlag & Instruction_Start) {

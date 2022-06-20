@@ -10,6 +10,7 @@ public:
 	RegisterView();
 	~RegisterView();
 	void Render();
+	void Render16Bit();
 
 	static RegisterView* CreateInstance(const std::string& pInstanceID, unsigned int flag = 0);
 	static RegisterView* GetInstance(const std::string& pInstanceID);

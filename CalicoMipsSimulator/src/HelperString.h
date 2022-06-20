@@ -14,7 +14,7 @@ std::string string_format(const std::string& format, Args ... args)
 	return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
 }
 bool is_number(const std::string& s);
-
+std::vector<std::string> TokenizeMyString(const std::string& s, const std::string& del);
 // trim from left
 inline std::string& ltrim(std::string& s, const char* t = " \t\n\r\f\v")
 {

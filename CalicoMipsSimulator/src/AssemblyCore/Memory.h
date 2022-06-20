@@ -99,10 +99,10 @@ private:
 		m_DataMemory.clear();
 	}
 	int IHandleDataMemoryByte(unsigned int aCurrentMemoryRow, unsigned int  aCurrentMemoryCol, bool& aIsValid) {
-		int address = (aCurrentMemoryRow * 4 + (aCurrentMemoryCol - 1) / 4);
+		int address = (aCurrentMemoryRow * 4 + (aCurrentMemoryCol - 1) / 2);
 		if (m_DataMemory.find(address) != m_DataMemory.end()) {
 			aIsValid = true;
-			return IGetnThByte(m_DataMemory[address].second, (aCurrentMemoryCol - 1) % 4) ;
+			return IGetnThByte(m_DataMemory[address].second, (aCurrentMemoryCol - 1) % 2) ;
 		}
 		else {
 			aIsValid = false;
