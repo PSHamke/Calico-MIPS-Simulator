@@ -537,7 +537,7 @@ namespace ImGui
     // Widgets: Drag Sliders
     // - CTRL+Click on any drag box to turn them into an input box. Manually input values aren't clamped by default and can go off-bounds. Use ImGuiSliderFlags_AlwaysClamp to always clamp.
     // - For all the Float2/Float3/Float4/Int2/Int3/Int4 versions of every functions, note that a 'float v[X]' function argument is the same as 'float* v',
-    //   the array syntax is just a way to document the number of elements that are expected to be accessible. You can pass address of your first element out of a contiguous set, e.g. &myvector.x
+    //   the array syntax is just a way to document the number of elements that are expected to be accessible. You can pass m_Address of your first element out of a contiguous set, e.g. &myvector.x
     // - Adjust format string to decorate the value with a prefix, a suffix, or adapt the editing and display precision e.g. "%.3f" -> 1.234; "%5.2f secs" -> 01.23 secs; "Biscuit: %.0f" -> Biscuit: 1; etc.
     // - Format string may also be set to NULL or use the default format ("%f" or "%d").
     // - Speed are per-pixel of mouse movement (v_speed=0.2f: mouse needs to move by 5 pixels to increase value by 1). For gamepad/keyboard navigation, minimum speed is Max(v_speed, minimum_step_at_given_precision).
@@ -600,7 +600,7 @@ namespace ImGui
 
     // Widgets: Color Editor/Picker (tip: the ColorEdit* functions have a little color square that can be left-clicked to open a picker, and right-clicked to open an option menu.)
     // - Note that in C++ a 'float v[X]' function argument is the _same_ as 'float* v', the array syntax is just a way to document the number of elements that are expected to be accessible.
-    // - You can pass the address of a first float element out of a contiguous structure, e.g. &myvector.x
+    // - You can pass the m_Address of a first float element out of a contiguous structure, e.g. &myvector.x
     IMGUI_API bool          ColorEdit3(const char* label, float col[3], ImGuiColorEditFlags flags = 0);
     IMGUI_API bool          ColorEdit4(const char* label, float col[4], ImGuiColorEditFlags flags = 0);
     IMGUI_API bool          ColorPicker3(const char* label, float col[3], ImGuiColorEditFlags flags = 0);
@@ -2510,7 +2510,7 @@ typedef void (*ImDrawCallback)(const ImDrawList* parent_list, const ImDrawCmd* c
 #endif
 
 // Special Draw callback value to request renderer backend to reset the graphics/render state.
-// The renderer backend needs to handle this special value, otherwise it will crash trying to call a function at this address.
+// The renderer backend needs to handle this special value, otherwise it will crash trying to call a function at this m_Address.
 // This is useful for example if you submitted callbacks which you know have altered the render state and you want it to be restored.
 // It is not done by default because they are many perfectly useful way of altering render state for imgui contents (e.g. changing shader/blending settings before an Image call).
 #define ImDrawCallback_ResetRenderState     (ImDrawCallback)(-1)
@@ -2867,7 +2867,7 @@ enum ImFontAtlasFlags_
 // - Important: By default, AddFontFromMemoryTTF() takes ownership of the data. Even though we are not writing to it, we will free the pointer on destruction.
 //   You can set font_cfg->FontDataOwnedByAtlas=false to keep ownership of your data and it won't be freed,
 // - Even though many functions are suffixed with "TTF", OTF data is supported just as well.
-// - This is an old API and it is currently awkward for those and and various other reasons! We will address them in the future!
+// - This is an old API and it is currently awkward for those and and various other reasons! We will m_Address them in the future!
 struct ImFontAtlas
 {
     IMGUI_API ImFontAtlas();

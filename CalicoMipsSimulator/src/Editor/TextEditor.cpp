@@ -1038,7 +1038,7 @@ void TextEditor::Render()
 				snprintf(buf, 16, "%X  ", GetStartSegmentValue() + (lineNo * 2));
 			}
 			else {
-				snprintf(buf, 16, "%X  ", GetStartSegmentValue() + (lineNo * 4));
+				snprintf(buf, 16, "%X  ", GetStartSegmentValue() + (lineNo * 2));
 			}
 			
 
@@ -1269,7 +1269,7 @@ void TextEditor::SetText(const std::string& aText)
 			mLines.back().emplace_back(Glyph(chr, PaletteIndex::Default));
 		}
 	}
-
+	
 	mTextChanged = true;
 	mScrollToTop = true;
 
@@ -1317,7 +1317,7 @@ void TextEditor::EnterCharacter(ImWchar aChar, bool aShift)
 	UndoRecord u;
 
 	u.mBefore = mState;
-
+	NobleLayer::Noble::SetStatus(false);
 	if (HasSelection())
 	{
 		if (aChar == '\t' && mState.mSelectionStart.mLine != mState.mSelectionEnd.mLine)
@@ -1456,12 +1456,7 @@ void TextEditor::EnterCharacter(ImWchar aChar, bool aShift)
 			//std::cout << error1[1] << "\n";
 			SetErrorMarkers(error1);
 		}
-		else if (mInstanceId == "##NobleDataEditor") {
-			ErrorMarkers& error1 = (ErrorMarkers)NobleLayer::DataMemoryHandler(GetText());
-			//CL_CORE_TRACE("Result map outside = {}", error1[1]);
-			//std::cout << error1[1] << "\n";
-			SetErrorMarkers(error1);
-		}
+		
 	}
 	else
 	{
@@ -1888,7 +1883,7 @@ void TextEditor::Delete()
 
 	UndoRecord u;
 	u.mBefore = mState;
-
+	NobleLayer::Noble::SetStatus(false);
 	if (HasSelection())
 	{
 		u.mRemoved = GetSelectedText();
@@ -1943,7 +1938,7 @@ void TextEditor::Backspace()
 
 	if (mLines.empty())
 		return;
-
+	NobleLayer::Noble::SetStatus(false);
 	UndoRecord u;
 	u.mBefore = mState;
 

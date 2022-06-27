@@ -57,6 +57,19 @@ namespace NobleLayer {
 		static std::string GetOutputString() {
 			return Get().IGetOutputString();
 		}
+		
+		static void CreateInstructionTable() {
+			return Get().ICreateInstructionTable();
+		}
+		static std::vector<ExecutionTable>& GetInstructionTable() {
+			return Get().IGetInstructionTable();
+		}
+		static bool GetStatus() {
+			return Get().IGetStatus();
+		}
+		static void SetStatus(bool status) {
+			return Get().ISetStatus(status);
+		}
 	private:
 
 		Noble() {
@@ -96,6 +109,9 @@ namespace NobleLayer {
 		std::vector <ExecutionTable>& IGet_ExecutionTable() {
 			return m_ExecutionTable;
 		}
+		std::vector <ExecutionTable>& IGetInstructionTable() {
+			return m_InstructionTable;
+		}
 		std::string IGetOutputString();
 		std::string IValidateInput(const std::string& data, const std::string& dataMem,int callingReason);
 		void IValidateLabel(const std::string& data, int p_CurrentLine, ErrorFlag& errorFlag);
@@ -106,20 +122,29 @@ namespace NobleLayer {
 		std::string IConstructCResult();
 		std::string Noble::CreateNobleOutput(int registerNum);
 		std::string CreateCOutput(std::vector<std::string> data, int argCount, int instructionCode, int functCode);
+		void ICreateInstructionTable();
+		bool IGetStatus() {
+			return m_Status;
+		}
+		void ISetStatus(bool status) {
+			m_Status = status;
+		}
 		void IPrintExecutionTable() {
 			for (const auto& it : m_ExecutionTable) {
-				CL_CORE_INFO("Address at {0}", it.address);
-				CL_CORE_INFO("Instruction {}", it.instruction);
-				for (const auto& it2 : it.datas) {
+				CL_CORE_INFO("Address at {0}", it.m_Address);
+				CL_CORE_INFO("Instruction {}", it.m_Instruction);
+				for (const auto& it2 : it.m_Datas) {
 					CL_CORE_INFO("Datas : {0}", it2);
 				}
-				CL_CORE_INFO("Immediate {0}", it.immediate);
-				for (const auto& it3 : it.registerNames) {
+				CL_CORE_INFO("Immediate {0}", it.m_Immediate);
+				for (const auto& it3 : it.m_RegisterNames) {
 					CL_CORE_INFO("Register Name : {}", it3);
 				}
 
 			}
 		}
+		std::string CreateReadableAsm(std::vector <std::string>& pInput);
+
 	private:
 		std::unordered_map<std::string, Register*> m_RegisterUMap;
 		std::unordered_map<std::string, Instruction*> m_InstructionUMap;
@@ -127,9 +152,11 @@ namespace NobleLayer {
 		std::map<int, std::string> m_CResultMap;
 		std::vector<std::string> m_UnregisteredLabels;
 		std::vector<ExecutionTable> m_ExecutionTable;
+		std::vector<ExecutionTable> m_InstructionTable;
 		std::vector<int> m_Immediates;
 		std::vector<std::string> m_OutputBuffer;
 		bool m_SegmentStart = false;
+		bool m_Status = false;
 	};
 
 	bool isSegmentInstruction(const std::string& token);

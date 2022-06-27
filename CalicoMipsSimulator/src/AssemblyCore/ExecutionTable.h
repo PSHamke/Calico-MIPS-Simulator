@@ -1,8 +1,9 @@
 #pragma once
 struct ExecutionTable { // Focus on that
-	int address;
-	std::string instruction;
-	std::vector<std::reference_wrapper<int>> datas;
-	int immediate;
-	std::vector<int> registerNames;
+	int m_Address;
+	std::string m_Instruction;
+	std::vector<std::reference_wrapper<int>> m_Datas;
+	int m_Immediate;
+	std::vector<int> m_RegisterNames;
+	std::string m_InputLine;
 };

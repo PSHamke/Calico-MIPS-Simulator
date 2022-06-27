@@ -48,6 +48,22 @@ public:
 	float m_Thickness;
 };
 
+class PathHalfEllipse {
+public:
+	PathHalfEllipse(std::string& name, ImVec2& center, float radiusX, float radiusY, float angle, ImU32 color, int numSegments = 64, float thickness = 1.0f) :
+		m_Name(name), m_Center(center), m_RadiusX(radiusX), m_RadiusY(radiusY), m_Angle(angle), m_Color(color), m_NumSegments(numSegments), m_Thickness(thickness) {}
+
+public:
+	std::string m_Name;
+	ImVec2 m_Center;
+	float m_RadiusX;
+	float m_RadiusY;
+	float m_Angle;
+	ImU32 m_Color;
+	int m_NumSegments;
+	float m_Thickness;
+};
+
 class PathCircle {
 public:
 	PathCircle(std::string& name, ImVec2& center, float radius, ImU32 color, int numSegments = 32, float thickness = 1.0f) :

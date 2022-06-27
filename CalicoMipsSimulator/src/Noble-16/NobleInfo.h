@@ -2,6 +2,7 @@
 #include "vector"
 #include "string"
 #include "Core.h"
+#include "map"
 namespace NobleLayer {
 	enum {
 		Reg_Constant_Value = BIT(0),
@@ -23,7 +24,9 @@ namespace NobleLayer {
 		Special_Label = BIT(17),
 		Reg_Error = BIT(18)
 	};
+	
 	std::vector<int>& InstructionInfo(const std::string& token);
+	int SyntaxInfo(const std::string& token);
 	int RegisterInfo(const std::string& token);
 
 }

@@ -122,7 +122,7 @@ public:
 class InstructionFormatI : public Instruction {
 public:
 	InstructionFormatI(const std::string name, const unsigned int opcode, std::function<int(int&, int&, int&)> f)
-		: Instruction(name, InstructionType::R, opcode, -1, 2, 3), m_Functionality(std::move(f)) {}
+		: Instruction(name, InstructionType::I, opcode, -1, 2, 3), m_Functionality(std::move(f)) {}
 
 private:
 	std::function<int(int&, int&, int&)> m_Functionality;
@@ -173,7 +173,7 @@ public:
 class InstructionFormatJ : public Instruction {
 public:
 	InstructionFormatJ(const std::string name, const unsigned int opcode, std::function<int(int&)> f)
-		: Instruction(name, InstructionType::R, opcode, -1, 0, 1), m_Functionality(std::move(f)) {}
+		: Instruction(name, InstructionType::J, opcode, -1, 0, 1), m_Functionality(std::move(f)) {}
 
 private:
 	std::function<int(int&)> m_Functionality;

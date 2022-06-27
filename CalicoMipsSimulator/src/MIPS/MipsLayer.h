@@ -95,18 +95,7 @@ namespace MIPSLayer {
 		bool ILabelCheck(const std::string label);
 		std::string IConstructCResult();
 		void IPrintExecutionTable() {
-			for (const auto& it : m_ExecutionTable) {
-				CL_CORE_INFO("Address at {0}", it.address);
-				CL_CORE_INFO("Instruction {}", it.instruction);
-				for (const auto& it2 : it.datas) {
-					CL_CORE_INFO("Datas : {0}", it2);
-				}
-				CL_CORE_INFO("Immediate {0}", it.immediate);
-				for (const auto& it3 : it.registerNames) {
-					CL_CORE_INFO("Register Name : {}", it3);
-				}
-
-			}
+			
 		}
 	private:
 		std::unordered_map<std::string, Register*> m_RegisterUMap;

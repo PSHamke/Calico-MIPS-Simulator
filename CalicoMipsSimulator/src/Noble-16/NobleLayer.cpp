@@ -5,36 +5,36 @@ namespace NobleLayer {
 	void Noble::InitRegistersMap()
 	{
 		m_RegisterUMap["$zero"] = new Register("zero", 0, NULL, registerStatus::free);
-		m_RegisterUMap["$v0"] = new Register("v0", 1, NULL, registerStatus::free);
-		m_RegisterUMap["$t0"] = new Register("t0", 2, NULL, registerStatus::free);
-		m_RegisterUMap["$t1"] = new Register("t1", 3, NULL, registerStatus::free);
-		m_RegisterUMap["$t2"] = new Register("t2", 4, NULL, registerStatus::free);
-		m_RegisterUMap["$s0"] = new Register("s0", 5, NULL, registerStatus::free);
-		m_RegisterUMap["$s1"] = new Register("s1", 6, NULL, registerStatus::free);
-		m_RegisterUMap["$ra"] = new Register("ra", 7, NULL, registerStatus::free);
+		m_RegisterUMap["$v0"]   = new Register("v0", 1, NULL, registerStatus::free);
+		m_RegisterUMap["$t0"]   = new Register("t0", 2, NULL, registerStatus::free);
+		m_RegisterUMap["$t1"]   = new Register("t1", 3, NULL, registerStatus::free);
+		m_RegisterUMap["$t2"]   = new Register("t2", 4, NULL, registerStatus::free);
+		m_RegisterUMap["$s0"]   = new Register("s0", 5, NULL, registerStatus::free);
+		m_RegisterUMap["$s1"]   = new Register("s1", 6, NULL, registerStatus::free);
+		m_RegisterUMap["$ra"]   = new Register("ra", 7, NULL, registerStatus::free);
 	}
 
 	void Noble::InitInstructionMap()
 	{
-		m_InstructionUMap["add"] = new InstructionFormatR("add", 0x0, 0x00, addCallback);
-		m_InstructionUMap["sub"] = new InstructionFormatR("sub", 0x0, 0x01, subCallback);
-		m_InstructionUMap["and"] = new InstructionFormatR("and", 0x0, 0x02, andCallback);
-		m_InstructionUMap["or"] = new InstructionFormatR("or", 0x0, 0x03, orCallback);
-		m_InstructionUMap["slt"] = new InstructionFormatR("slt", 0x0, 0x04, sltCallback);
-		m_InstructionUMap["jr"] = new InstructionFormatR("jr", 0x0, 0x05, jrCallback);
-		m_InstructionUMap["sll"] = new InstructionFormatR("sll", 0x0, 0x06, sllCallback);
-		m_InstructionUMap["srl"] = new InstructionFormatR("srl", 0x0, 0x07, srlCallback);
-		m_InstructionUMap["mul"] = new  InstructionFormatR("mul", 0xf, 0x00, mulCallback);
+		m_InstructionUMap["add"]  = new InstructionFormatR("add", 0x0, 0x00, addCallback);
+		m_InstructionUMap["sub"]  = new InstructionFormatR("sub", 0x0, 0x01, subCallback);
+		m_InstructionUMap["and"]  = new InstructionFormatR("and", 0x0, 0x02, andCallback);
+		m_InstructionUMap["or"]   = new InstructionFormatR("or", 0x0, 0x03, orCallback);
+		m_InstructionUMap["slt"]  = new InstructionFormatR("slt", 0x0, 0x04, sltCallback);
+		m_InstructionUMap["jr"]   = new InstructionFormatR("jr", 0x0, 0x05, jrCallback);
+		m_InstructionUMap["sll"]  = new InstructionFormatR("sll", 0x0, 0x06, sllCallback);
+		m_InstructionUMap["srl"]  = new InstructionFormatR("srl", 0x0, 0x07, srlCallback);
+		m_InstructionUMap["mul"]  = new  InstructionFormatR("mul", 0xf, 0x00, mulCallback);
 		m_InstructionUMap["slti"] = new InstructionFormatI("slti", 0xA, sltiCallback);
-		m_InstructionUMap["beq"] = new InstructionFormatI("beq", 0x04, beqCallback);
-		m_InstructionUMap["bne"] = new InstructionFormatI("bne", 0x05, bneCallback);
+		m_InstructionUMap["beq"]  = new InstructionFormatI("beq", 0x04, beqCallback);
+		m_InstructionUMap["bne"]  = new InstructionFormatI("bne", 0x05, bneCallback);
 		m_InstructionUMap["addi"] = new InstructionFormatI("addi", 0x06, addiCallback);
-		m_InstructionUMap["lui"] = new InstructionFormatI("lui", 0x01, luiCallback);
-		m_InstructionUMap["lw"] = new InstructionFormatI("lw", 0x0B, lwCallback);
-		m_InstructionUMap["sw"] = new InstructionFormatI("sw", 0x0C, swCallback);
+		m_InstructionUMap["lui"]  = new InstructionFormatI("lui", 0x01, luiCallback);
+		m_InstructionUMap["lw"]   = new InstructionFormatI("lw", 0x0B, lwCallback);
+		m_InstructionUMap["sw"]   = new InstructionFormatI("sw", 0x0C, swCallback);
 		m_InstructionUMap["muli"] = new InstructionFormatI("muli", 0x0E, muliCallback);
-		m_InstructionUMap["jal"] = new InstructionFormatJ("jal", 0x3, jalCallback);
-		m_InstructionUMap["j"] = new InstructionFormatJ("j", 0x2, jCallback);
+		m_InstructionUMap["jal"]  = new InstructionFormatJ("jal", 0x3, jalCallback);
+		m_InstructionUMap["j"]    = new InstructionFormatJ("j", 0x2, jCallback);
 		m_InstructionUMap["nout"] = new InstructionFormatJ("nout", 0x7, NULL);
 	}
 	std::map<int, std::string> DataMemoryHandler(const std::string& aText) {
@@ -208,8 +208,8 @@ namespace NobleLayer {
 			errorflag = Error_None;
 			switch (token.size()) {
 			case 1:
-				temp1.address = TokenizedLineCount;
-				temp1.instruction = "label";
+				temp1.m_Address = TokenizedLineCount;
+				temp1.m_Instruction = "label";
 				m_ExecutionTable.push_back(temp1);
 				CL_CORE_ERROR("Label : {}", token.at(0));
 				break;
@@ -327,7 +327,7 @@ namespace NobleLayer {
 			m_CResultMap[pCurrentLine] = string_format("[Error] Insufficient Instruction at line %d.\n", pCurrentLine);
 			CL_CORE_INFO("Expected {0} Given {1}", expectedArgumentsSize, givenArgumentsSize);
 		}
-		else {// count instruction name  +1  
+		else {// count m_Instruction name  +1  
 			int i;
 			int expectedArgument = 0;
 			int  immediate = 0;
@@ -340,16 +340,16 @@ namespace NobleLayer {
 						immediate = (atoi(token.c_str()));
 
 						//if (expectedArguments.at(i - 1) & Special_Paranthesis)
-							//immediate = immediate;
-						//m_Immediates.push_back(immediate);
-						//datas.push_back((m_Immediates.back()));
+							//m_Immediate = m_Immediate;
+						//m_Immediates.push_back(m_Immediate);
+						//m_Datas.push_back((m_Immediates.back()));
 					}
 					else if (expectedArgument & Special_Label) { // it might be label // label might not be registered to map yet.. 
 						CL_CORE_ERROR("Label Expected!");
 						if (ILabelCheck(token)) {
 							immediate = m_LabelUMap[token];
 							CL_CORE_ERROR("Label Expected! {0}, address {1}", token, immediate);
-							//datas.push_back((std::ref(immediate)));
+							//m_Datas.push_back((std::ref(m_Immediate)));
 						}
 						else {
 							pErrorFlag |= Non_Exist_Label;
@@ -386,12 +386,14 @@ namespace NobleLayer {
 				if (Memory::GetCallingReason() == 3)
 					m_InstructionUMap[pInput.at(0)]->Execute(datas, immediate, vecRegisterNames, PC);
 				
+				std::string inputLine = "";
 				ExecutionTable temp;
-				temp.address = pCurrentLine;
-				temp.datas = datas;
-				temp.immediate = immediate;
-				temp.instruction = pInput.at(0);
-				temp.registerNames = vecRegisterNames;
+				temp.m_Address = pCurrentLine;
+				temp.m_Datas = datas;
+				temp.m_Immediate = immediate;
+				temp.m_Instruction = pInput.at(0);
+				temp.m_RegisterNames = vecRegisterNames;
+				temp.m_InputLine = CreateReadableAsm(pInput);
 				m_ExecutionTable.push_back(temp);
 				m_CResultMap[pCurrentLine] = string_format("\t%s", CreateCOutput(pInput, expectedArguments.size(), m_InstructionUMap[pInput.at(0)]->getOpcode(), m_InstructionUMap[pInput.at(0)]->getFunct()).c_str());
 			}
@@ -424,39 +426,77 @@ namespace NobleLayer {
 		//IResetRegisterUMap();
 		//Memory::SetPC(0);
 		Memory::SetCallingReason(4); // Set .text memory read only 
-		while (Memory::GetPC() < m_ExecutionTable.size() && Memory::GetVirtualPC() < step) {
+		if (step == -1) {
+			while (Memory::GetPC() < m_ExecutionTable.size()) {
 
-			CL_CORE_INFO("Execution done for address {0} Current PC = {1}", m_ExecutionTable[Memory::GetPC()].address, Memory::GetPC());
-			if (m_ExecutionTable[Memory::GetPC()].instruction == "label") {
-				Memory::SetPC(Memory::GetPC() + 1);
-				CL_CORE_INFO("Label here {0}", Memory::GetPC());
-				Memory::SetVirtualPC(Memory::GetVirtualPC() + 1);
-				continue;
-			}
-			else if (m_ExecutionTable[Memory::GetPC()].instruction == "nout") {
-				
-				CL_CORE_INFO("Nout here {0}", Memory::GetPC());
-				m_OutputBuffer.push_back(CreateNobleOutput(m_ExecutionTable[Memory::GetPC()].registerNames[0]));
-				Memory::SetPC(Memory::GetPC() + 1);
-				Memory::SetVirtualPC(Memory::GetVirtualPC() + 1);
-				continue;
-				
-			}
-			else if (m_ExecutionTable[Memory::GetPC()].instruction == "jal") {
-				m_RegisterUMap["$ra"]->getRef() -= m_RegisterUMap["$ra"]->getRef(); // Kinda messed up here 
-				m_RegisterUMap["$ra"]->getRef() += Memory::GetPC() + 1;
-			}
-			m_InstructionUMap[m_ExecutionTable[Memory::GetPC()].instruction]->Execute(
-				m_ExecutionTable[Memory::GetPC()].datas,m_ExecutionTable[Memory::GetPC()].immediate,
-				m_ExecutionTable[Memory::GetPC()].registerNames, i);
-			Memory::SetVirtualPC(Memory::GetVirtualPC() + 1);
-			counter++;
-			if (counter > 10000) {
-				CL_CORE_INFO("Infinite Loop aborted!");
-				break;
-			}
+				CL_CORE_INFO("Execution done for address {0} Current PC = {1}", m_ExecutionTable[Memory::GetPC()].m_Address, Memory::GetPC());
+				if (m_ExecutionTable[Memory::GetPC()].m_Instruction == "label") {
+					Memory::SetPC(Memory::GetPC() + 1);
+					CL_CORE_INFO("Label here {0}", Memory::GetPC());
+					Memory::SetVirtualPC(Memory::GetVirtualPC() + 1);
+					continue;
+				}
+				else if (m_ExecutionTable[Memory::GetPC()].m_Instruction == "nout") {
 
+					CL_CORE_INFO("Nout here {0}", Memory::GetPC());
+					m_OutputBuffer.push_back(CreateNobleOutput(m_ExecutionTable[Memory::GetPC()].m_RegisterNames[0]));
+					Memory::SetPC(Memory::GetPC() + 1);
+					Memory::SetVirtualPC(Memory::GetVirtualPC() + 1);
+					continue;
+
+				}
+				else if (m_ExecutionTable[Memory::GetPC()].m_Instruction == "jal") {
+					m_RegisterUMap["$ra"]->getRef() -= m_RegisterUMap["$ra"]->getRef(); // Kinda messed up here 
+					m_RegisterUMap["$ra"]->getRef() += Memory::GetPC() + 1;
+				}
+				m_InstructionUMap[m_ExecutionTable[Memory::GetPC()].m_Instruction]->Execute(
+					m_ExecutionTable[Memory::GetPC()].m_Datas, m_ExecutionTable[Memory::GetPC()].m_Immediate,
+					m_ExecutionTable[Memory::GetPC()].m_RegisterNames, i);
+				Memory::SetVirtualPC(Memory::GetVirtualPC() + 1);
+				counter++;
+				if (counter > 10000) {
+					CL_CORE_INFO("Infinite Loop aborted!");
+					break;
+				}
+
+			}
 		}
+		else {
+			while (Memory::GetPC() < m_ExecutionTable.size() && Memory::GetVirtualPC() < step) {
+
+				CL_CORE_INFO("Execution done for address {0} Current PC = {1}", m_ExecutionTable[Memory::GetPC()].m_Address, Memory::GetPC());
+				if (m_ExecutionTable[Memory::GetPC()].m_Instruction == "label") {
+					Memory::SetPC(Memory::GetPC() + 1);
+					CL_CORE_INFO("Label here {0}", Memory::GetPC());
+					Memory::SetVirtualPC(Memory::GetVirtualPC() + 1);
+					continue;
+				}
+				else if (m_ExecutionTable[Memory::GetPC()].m_Instruction == "nout") {
+
+					CL_CORE_INFO("Nout here {0}", Memory::GetPC());
+					m_OutputBuffer.push_back(CreateNobleOutput(m_ExecutionTable[Memory::GetPC()].m_RegisterNames[0]));
+					Memory::SetPC(Memory::GetPC() + 1);
+					Memory::SetVirtualPC(Memory::GetVirtualPC() + 1);
+					continue;
+
+				}
+				else if (m_ExecutionTable[Memory::GetPC()].m_Instruction == "jal") {
+					m_RegisterUMap["$ra"]->getRef() -= m_RegisterUMap["$ra"]->getRef(); // Kinda messed up here 
+					m_RegisterUMap["$ra"]->getRef() += Memory::GetPC() + 1;
+				}
+				m_InstructionUMap[m_ExecutionTable[Memory::GetPC()].m_Instruction]->Execute(
+					m_ExecutionTable[Memory::GetPC()].m_Datas, m_ExecutionTable[Memory::GetPC()].m_Immediate,
+					m_ExecutionTable[Memory::GetPC()].m_RegisterNames, i);
+				Memory::SetVirtualPC(Memory::GetVirtualPC() + 1);
+				counter++;
+				if (counter > 10000) {
+					CL_CORE_INFO("Infinite Loop aborted!");
+					break;
+				}
+
+			}
+		}
+		
 	}
 
 	bool Noble::ILabelInsert(const std::string label, int address)
@@ -519,7 +559,7 @@ namespace NobleLayer {
 				result = string_format("goto %s;", data[1].c_str());
 				break;
 			case 0x1:
-				result = string_format("%s = %s;", data[1].c_str(), data[2].c_str());
+				result = string_format("%s = (%s << 6);", data[1].c_str(), data[2].c_str());
 				break;
 			case 0xE:
 				result = string_format("%s = %s * %s;", data[1].c_str(), data[2].c_str(), data[3].c_str());
@@ -592,4 +632,43 @@ namespace NobleLayer {
 		}
 		return false;
 	}
+
+	void Noble::ICreateInstructionTable() {
+		ExecutionTable temp;
+		m_InstructionTable.clear();
+		for (const auto& it : m_ExecutionTable) {
+			if (it.m_Instruction != "label" && it.m_Instruction != "nout")
+				m_InstructionTable.push_back(it);
+		}
+		if (m_InstructionTable.size() > 0) {
+			m_Status = true;
+		}
+	}
+
+	std::string Noble::CreateReadableAsm(std::vector <std::string>& pInput)
+	{
+	
+		std::string temp = "";
+		int syntaxInfo = SyntaxInfo(pInput.at(0));
+		switch (syntaxInfo)
+		{
+		case 1:
+			temp = string_format("%s %s, %s, %s", pInput.at(0).c_str(), pInput.at(1).c_str(), pInput.at(2).c_str(), pInput.at(3).c_str());
+			break;
+		case 2:
+			temp = string_format("%s %s, %s(%s)", pInput.at(0).c_str(), pInput.at(1).c_str(), pInput.at(2).c_str(), pInput.at(3).c_str());
+			break;
+		case 3:
+			temp = string_format("%s %s, %s", pInput.at(0).c_str(), pInput.at(1).c_str(), pInput.at(2).c_str());
+			break;
+		case 4:
+			temp = string_format("%s %s", pInput.at(0).c_str(), pInput.at(1).c_str());
+			break;
+		default:
+			CL_CORE_TRACE("Unkown");
+			break;
+		}
+		return temp;
+	}
+
 }

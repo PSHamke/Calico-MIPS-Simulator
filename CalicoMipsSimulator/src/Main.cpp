@@ -10,8 +10,6 @@
 		PSTR cmdline,
 		int cmdshow)
 	{
-		
-		
 		Application* app = CreateApplication(__argc, __argv);
 		app->Run();
 		delete app;

@@ -96,16 +96,51 @@ namespace NobleLayer {
 
 		{"j",{ Special_Label | Special_Constant}},
 
-		// pseudo instruction to get output
+		// pseudo m_Instruction to get output
 		{"nout",{Reg_Expression_Evaluation | Reg_Arguments | Reg_Temporaries | Reg_SavedTemporaries | Reg_ExtraTemporaries}}
 
-	}; // pair of instruction and expected arguments
+	}; // pair of m_Instruction and expected arguments
 
 	std::pair<std::string, int> registers[] = {
 			{"$zero",Reg_Constant_Value},{"$v0",Reg_Expression_Evaluation},
 			{"$t0",Reg_Temporaries}, {"$t1",Reg_Temporaries},{"$t2",Reg_Temporaries},
 			{"$s0",Reg_SavedTemporaries}, {"$s1",Reg_SavedTemporaries},{"$ra",Reg_Return_Address}
 	};
+
+	std::pair<std::string, int> syntax [] = {
+		
+		{"add",1},
+		{"and",1},
+		{"or",1},
+		{"mul",1},
+		{"slt",1},
+		{"sll",1},
+		{"srl",1},
+		{"sub",1},
+		{"beq",1},
+		{"bne",1},
+		{"muli",1},
+		{"slti",1},
+		{"addi",1},
+		{"sw",2},
+		{"lw",2},
+		{"lui",3},
+		{"jr",4},
+		{"jal",4},
+		{"j",4}
+	};
+
+	int SyntaxInfo(const std::string& token) {
+		int result = 0;
+		for (auto& it : syntax) {
+			if (token == it.first) {
+				result = it.second;
+				break;
+			}
+				
+		}
+		return result;
+	}
 
 	std::vector<int>& InstructionInfo(const std::string& token) {
 

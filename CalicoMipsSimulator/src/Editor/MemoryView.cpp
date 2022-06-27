@@ -2,6 +2,7 @@
 #include "Log.h"
 #include "Memory.h"
 #include "settings.h"
+#include "NobleLayer.h"
 std::vector<MemoryView*> MemoryView::Instances;
 int header_index = 0;
 MemoryView::MemoryView() {
@@ -262,7 +263,7 @@ void MemoryView::RenderBinary()
 					}
 
 					ImGui::TableSetColumnIndex(33);
-					ImGui::Text("%s", Memory::GetAscii(row));
+					ImGui::Text("%s", Memory::GetAscii(row, mType == MemoryType::Text ? 0 : 1));
 
 				}
 			}
@@ -322,7 +323,7 @@ void MemoryView::Render16BitHex()
 
 		// Demonstrate using clipper for large vertical lists
 		ImGuiListClipper clipper;
-		clipper.Begin(1000);
+		clipper.Begin(128);
 		while (clipper.Step())
 		{
 			for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; row++)
@@ -331,6 +332,7 @@ void MemoryView::Render16BitHex()
 				ImGui::TableNextRow();
 				ImGui::TableSetColumnIndex(0);
 				ImGui::Text("0x%.3X", addressBase + (row) * 0x8); // Address section
+				
 				for (int column = 1; column < 9; column++)
 				{
 					ImGui::TableSetColumnIndex(column);
@@ -361,6 +363,126 @@ void MemoryView::Render16BitHex()
 
 	ImGui::PopFont();
 }
+
+void MemoryView::SetTextMemoryToolTip(int row) {
+	ImVec2 m = ImGui::GetIO().MousePos;
+	ImGui::SetNextWindowPos(ImVec2(m.x + 10, m.y));
+	ImGui::Begin("1", NULL, ImGuiWindowFlags_Tooltip | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar);
+	ImGui::Text("%s", NobleLayer::Noble::GetInstructionTable()[row].m_Instruction.c_str());
+	ImGui::End();
+
+	ImGui::SetNextWindowPos(ImVec2(m.x + 50, m.y));
+	ImGui::Begin("2", NULL, ImGuiWindowFlags_Tooltip | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar);
+	//ImGui::Text("SECOND TOOLTIP");
+	std::string registerNames[8] = {
+		"$zero", " $v0 "," $t0 "," $t1 "," $t2 "," $s0 "," $s1 "," $ra "
+	};
+	Instruction* tempInst = NobleLayer::Noble::GetInstructionUMap()[NobleLayer::Noble::GetInstructionTable()[row].m_Instruction];
+	std::vector<std::pair<const char*, ImU32>> header;
+	std::vector<std::pair<std::string, ImU32>> data;
+	
+	static ImGuiTableFlags flags = ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInner;
+	static int row_bg_type = 1;
+	static int row_bg_target = 1;
+	static int cell_bg_type = 1;
+	InstructionType	insType = NobleLayer::Noble::GetInstructionUMap()[NobleLayer::Noble::GetInstructionTable()[row].m_Instruction]->getType();
+	int columnCount = 0;
+	switch (insType)
+	{
+	case InstructionType::R:
+		
+		
+		header.push_back(std::make_pair(" opcode ", 0x800020ff));
+		header.push_back(std::make_pair("  rs  ", 0xffc040a0));
+		header.push_back(std::make_pair("  rt  ", 0xffc040a0));
+		header.push_back(std::make_pair("  rd  ", 0xffc040a0));
+		header.push_back(std::make_pair("funct ", 0x60caf400));
+		if (tempInst->getFunct() == 5) {
+			data.push_back(std::make_pair(string_format("  0x%.2X ", tempInst->getOpcode()), 0x800020ff));
+			data.push_back(std::make_pair(registerNames[NobleLayer::Noble::GetInstructionTable()[row].m_RegisterNames[0]], 0xffc040a0));
+			data.push_back(std::make_pair(" N/A", 0xffc040a0));
+			data.push_back(std::make_pair(" N/A", 0xffc040a0));
+			data.push_back(std::make_pair(string_format(" 0x%.2X ", tempInst->getFunct()), 0x60caf400));
+		}
+		else {
+			data.push_back(std::make_pair(string_format("  0x%.2X ", tempInst->getOpcode()), 0x800020ff));
+			data.push_back(std::make_pair(registerNames[NobleLayer::Noble::GetInstructionTable()[row].m_RegisterNames[1]], 0xffc040a0));
+			data.push_back(std::make_pair(registerNames[NobleLayer::Noble::GetInstructionTable()[row].m_RegisterNames[2]], 0xffc040a0));
+			data.push_back(std::make_pair(registerNames[NobleLayer::Noble::GetInstructionTable()[row].m_RegisterNames[0]], 0xffc040a0));
+			data.push_back(std::make_pair(string_format(" 0x%.2X ", tempInst->getFunct()), 0x60caf400));
+		}
+		
+		columnCount = 5;
+		
+		break;
+	case InstructionType::I:
+		header.push_back(std::make_pair(" opcode ", 0x800020ff));
+		header.push_back(std::make_pair("  rs  ", 0xffc040a0));
+		header.push_back(std::make_pair("  rt  ", 0xffc040a0));
+		header.push_back(std::make_pair("  immediate ", 0xe1dd3e00));
+
+		if (tempInst->getOpcode() == 1) {
+			data.push_back(std::make_pair(string_format("  0x%.2X ", tempInst->getOpcode()), 0x800020ff));
+			data.push_back(std::make_pair(" N/A", 0xffc040a0));
+			data.push_back(std::make_pair(registerNames[NobleLayer::Noble::GetInstructionTable()[row].m_RegisterNames[0]], 0xffc040a0));
+			data.push_back(std::make_pair(string_format("    0x%.2X ", NobleLayer::Noble::GetInstructionTable()[row].m_Immediate), 0xe1dd3e00));
+		}
+		else {
+			data.push_back(std::make_pair(string_format("  0x%.2X ", tempInst->getOpcode()), 0x800020ff));
+			data.push_back(std::make_pair(registerNames[NobleLayer::Noble::GetInstructionTable()[row].m_RegisterNames[1]], 0xffc040a0));
+			data.push_back(std::make_pair(registerNames[NobleLayer::Noble::GetInstructionTable()[row].m_RegisterNames[0]], 0xffc040a0));
+			data.push_back(std::make_pair(string_format("    0x%.2X ", NobleLayer::Noble::GetInstructionTable()[row].m_Immediate), 0xe1dd3e00));
+		}
+		
+		columnCount = 4;
+		break;
+	case InstructionType::J:
+		header.push_back(std::make_pair(" opcode ", 0x800020ff));
+		header.push_back(std::make_pair("            address           ", 0x8c0864f0));
+
+
+		data.push_back(std::make_pair(string_format("  0x%.2X ", tempInst->getOpcode()), 0x800020ff));
+		data.push_back(std::make_pair(string_format("            0x%.4X ", NobleLayer::Noble::GetInstructionTable()[row].m_Immediate), 0x8c0864f0));
+		columnCount = 2;
+	default:
+		break;
+	}
+	
+	if (ImGui::BeginTable("table1", columnCount, flags))
+	{
+		ImGui::TableNextRow();
+
+
+		ImGui::TableNextRow();
+		for (int column = 0; column < columnCount; column++) {
+			ImGui::TableSetColumnIndex(column);
+			ImGui::Text("%s", header[column].first);
+			ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, header[column].second);
+		}
+		ImGui::TableNextRow();
+		for (int column = 0; column < columnCount; column++)
+		{
+			ImGui::TableSetColumnIndex(column);
+			ImGui::Text("%s", data[column].first.c_str());
+			ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, data[column].second);
+
+
+		}
+
+		ImGui::EndTable();
+	}
+	ImGui::End();
+}
+
+void MemoryView::SetDataMemoryToolTip(int row)
+{
+	ImVec2 m = ImGui::GetIO().MousePos;
+	ImGui::SetNextWindowPos(ImVec2(m.x + 10, m.y));
+	ImGui::Begin("1", NULL, ImGuiWindowFlags_Tooltip | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar);
+	ImGui::Text("%d", Memory::GetDataMemory()[row].second);
+	ImGui::End();
+}
+
 void MemoryView::Render16BitBinary() 
 {
 	char buf1[17];
@@ -368,14 +490,13 @@ void MemoryView::Render16BitBinary()
 	char buf3[20];
 
 
-	int addressBase = GetMemoryType() == MemoryType::Text ? 0x000000 : 0x0000;
+	int addressBase = GetMemoryType() == MemoryType::Text ? 0x00000 : 0x0000;
 
 	//CL_CORE_INFO ("Memsize {0}",Memory::GetTextMemory().size());
 	//mFont->FontSize = 5;
 	ImGui::PushFont(mFont);
 	static ImGuiTableFlags flags = ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV | ImGuiTableFlags_Hideable;
 	float	TEXT_BASE_HEIGHT = ImGui::GetTextLineHeightWithSpacing();
-
 
 	bool focus_address = true;
 	int address_index = 100;
@@ -411,7 +532,7 @@ void MemoryView::Render16BitBinary()
 
 		// Demonstrate using clipper for large vertical lists
 		ImGuiListClipper clipper;
-		clipper.Begin(1000);
+		clipper.Begin(512);
 		while (clipper.Step())
 		{
 			for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; row++)
@@ -420,11 +541,25 @@ void MemoryView::Render16BitBinary()
 				ImGui::TableNextRow();
 				ImGui::TableSetColumnIndex(0);
 				ImGui::Text("0x%.3X", addressBase + (row) * 0x2); // Address section
+				Memory::HandleMemoryBit(row, 0, mType == MemoryType::Text ? 0 : 1, isValidMem);
+				if (mType== MemoryType::Text && isValidMem) {
+					if (ImGui::IsItemHovered()) {
+						SetTextMemoryToolTip(row);
+					}
+						//ImGui::SetTooltip("%s", GetToolTip(row).c_str());
+				}
+				else if (mType == MemoryType::Data && isValidMem) {
+					if (ImGui::IsItemHovered()) {
+						SetDataMemoryToolTip(row);
+					}
+				}
+				
+				
 				for (int column = 1; column < 17; column++)
 				{
 					ImGui::TableSetColumnIndex(column);
 					result = Memory::HandleMemoryBit(row, 16 - column, mType == MemoryType::Text ? 0 : 1, isValidMem);
-
+					
 					ImGui::PushStyleColor(ImGuiCol_Text, isValidMem ? activeMemory : inactiveMemory);
 					ImGui::Text("%X", isValidMem ? result : 0);
 					ImGui::PopStyleColor();
@@ -432,7 +567,7 @@ void MemoryView::Render16BitBinary()
 				}
 
 				ImGui::TableSetColumnIndex(17);
-				ImGui::Text("%s", Memory::GetAscii(row));
+				ImGui::Text("%s", Memory::GetAscii(row, mType == MemoryType::Text ? 0 : 1));
 
 			}
 		}

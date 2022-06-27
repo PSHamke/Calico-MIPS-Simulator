@@ -40,4 +40,6 @@ private:
 	void RenderBinary();
 	void Render16BitHex();
 	void Render16BitBinary();
+	void SetTextMemoryToolTip(int row);
+	void SetDataMemoryToolTip(int row);
 };

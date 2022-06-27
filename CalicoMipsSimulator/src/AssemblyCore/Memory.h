@@ -64,8 +64,8 @@ public:
 		return Get().ISetPC(value);
 	}
 
-	static const char* GetAscii(unsigned int mMemoryRow) {
-		return Get().IGetAscii(mMemoryRow);
+	static const char* GetAscii(unsigned int mMemoryRow, unsigned int aMemoryType) {
+		return Get().IGetAscii(mMemoryRow, aMemoryType);
 	}
 
 	static void SetTextMemory() {
@@ -132,18 +132,15 @@ private:
 		}
 	}
 	int IDataMemoryInsert(std::string label, int value, unsigned int address) {
-		if (m_DataMemory.find(address) != m_DataMemory.end()) {
-			return false;
-		}
-		else {
+		
 			m_DataMemory[address] = std::make_pair(label,value);
 			return true;
-		}
+		
 	}
 	int IHandleTextMemoryByte(unsigned int mCurrentMemoryRow, unsigned int  mCurrentMemoryCol, bool &mIsValid) {
-		if ((mCurrentMemoryRow * 4 + (mCurrentMemoryCol - 1) / 4) < m_TextMemory.size()) {
+		if ((mCurrentMemoryRow * 4 + (mCurrentMemoryCol - 1) / 2) < m_TextMemory.size()) {
 			mIsValid = true;
-			return IGetnThByte(m_TextMemory.at((int)(mCurrentMemoryRow * 4 + mCurrentMemoryCol - 1) / 4), (mCurrentMemoryCol - 1) % 4);
+			return IGetnThByte(m_TextMemory.at((int)(mCurrentMemoryRow * 4 + mCurrentMemoryCol - 1) / 2), (mCurrentMemoryCol - 1) % 2);
 			
 		}
 		mIsValid = false;
@@ -158,20 +155,26 @@ private:
 		return 0;
 	}
 	int IGetnThByte(int source, int n ) {
-		return (source >> (8 * n) & 0xff);
+		return ((source >> (8 * n)) & 0xff);
 	}
 	int IGetnThBit(int source, int n) {
 
 		return ((source >> n) & 1);
 	}
-	const char* IGetAscii(unsigned int mMemoryRow) {
+	const char* IGetAscii(unsigned int mMemoryRow, unsigned int aMemoryType) {
 		char mAscii[5] = "....";
-		if ((mMemoryRow) < m_TextMemory.size()) {
-			for (int i= 0; i < 4; i++) {
-				mAscii[i] = (char)IGetnThByte(m_TextMemory.at(mMemoryRow), i) >= 32 ? (char)IGetnThByte(m_TextMemory.at(mMemoryRow), i) : '.';
+		if (aMemoryType == 0) {
+			if ((mMemoryRow) < m_TextMemory.size()) {
+				for (int i = 0; i < 4; i++) {
+					mAscii[i] = (char)IGetnThByte(m_TextMemory.at(mMemoryRow), i) >= 32 ? (char)IGetnThByte(m_TextMemory.at(mMemoryRow), i) : '.';
+				}
+				mAscii[4] = '\0';
 			}
-			mAscii[4] = '\0';
 		}
+		else {
+			
+		}
+		
 		return mAscii;
 	}
 	std::vector <int >& IGetTextMemory () {

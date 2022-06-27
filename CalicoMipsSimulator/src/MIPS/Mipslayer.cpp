@@ -12,7 +12,7 @@ namespace MIPSLayer {
 
 	int PC = 0; // programming counter 
 	char* M; // data memory 
-	int RA = 0; // return address
+	int RA = 0; // return m_Address
 	
 	void MIPS::InitInstructionMap() {
 
@@ -239,8 +239,8 @@ namespace MIPSLayer {
 			errorflag = Error_None;
 			switch (token.size()) {
 			case 1:
-				temp1.address = TokenizedLineCount;
-				temp1.instruction = "label";
+				temp1.m_Address = TokenizedLineCount;
+				temp1.m_Instruction = "label";
 				m_ExecutionTable.push_back(temp1);		
 				CL_CORE_ERROR("Label : {}", token.at(0));
 				break;
@@ -446,7 +446,7 @@ namespace MIPSLayer {
 			m_CResultMap[pCurrentLine] = string_format("[Error] Insufficient Instruction at line %d.\n", pCurrentLine);
 			CL_CORE_INFO("Expected {0} Given {1}", expectedArgumentsSize, givenArgumentsSize);
 		}
-		else {// count instruction name  +1  
+		else {// count m_Instruction name  +1  
 			int i;
 			int expectedArgument = 0;
 			int  immediate = 0;
@@ -460,15 +460,15 @@ namespace MIPSLayer {
 
 							if (expectedArguments.at(i - 1) & Special_Paranthesis)
 								immediate = immediate / 4;
-							//m_Immediates.push_back(immediate);
-							//datas.push_back((m_Immediates.back()));
+							//m_Immediates.push_back(m_Immediate);
+							//m_Datas.push_back((m_Immediates.back()));
 					}
 					else if (expectedArgument & Special_Label) { // it might be label // label might not be registered to map yet.. 
 						CL_CORE_ERROR("Label Expected!");
 						if (ILabelCheck(token)) {
 							immediate = m_LabelUMap[token];
 							CL_CORE_ERROR("Label Expected! {0}, address {1}", token, immediate);
-							//datas.push_back((std::ref(immediate)));
+							//m_Datas.push_back((std::ref(m_Immediate)));
 						}
 						else {
 							pErrorFlag |= Non_Exist_Label;
@@ -507,11 +507,11 @@ namespace MIPSLayer {
 				if(specialCases!=2)
 					m_InstructionUMap[pInput.at(0)]->Execute(datas,immediate, vecRegisterNames, PC);
 				ExecutionTable temp;
-				temp.address = pCurrentLine;
-				temp.datas = datas;
-				temp.immediate = immediate;
-				temp.instruction = pInput.at(0);
-				temp.registerNames = vecRegisterNames;
+				temp.m_Address = pCurrentLine;
+				temp.m_Datas = datas;
+				temp.m_Immediate = immediate;
+				temp.m_Instruction = pInput.at(0);
+				temp.m_RegisterNames = vecRegisterNames;
 				m_ExecutionTable.push_back(temp);
 				m_CResultMap[pCurrentLine] = string_format("\t%s", CreateCOutput(pInput, expectedArguments.size(), m_InstructionUMap[pInput.at(0)]->getOpcode(), m_InstructionUMap[pInput.at(0)]->getFunct()).c_str());
 			}
@@ -548,15 +548,15 @@ namespace MIPSLayer {
 		//Memory::SetPC(0);
 		Memory::SetCallingReason(1); // Set .text memory read only 
 		while (Memory::GetPC() < m_ExecutionTable.size() && Memory::GetVirtualPC() < step) {
-			CL_CORE_INFO("Execution done for address {0} Current PC = {1}", m_ExecutionTable[Memory::GetPC()].address, Memory::GetPC());
-			if (m_ExecutionTable[Memory::GetPC()].instruction == "label") {
+			CL_CORE_INFO("Execution done for address {0} Current PC = {1}", m_ExecutionTable[Memory::GetPC()].m_Address, Memory::GetPC());
+			if (m_ExecutionTable[Memory::GetPC()].m_Instruction == "label") {
 				Memory::SetPC(Memory::GetPC() + 1);
 				CL_CORE_INFO("Label here {0}",Memory::GetPC());
 				Memory::SetVirtualPC(Memory::GetVirtualPC() + 1);
 				continue;
 			}
-			m_InstructionUMap[m_ExecutionTable[Memory::GetPC()].instruction]->Execute(m_ExecutionTable[Memory::GetPC()].datas,
-				m_ExecutionTable[Memory::GetPC()].immediate, m_ExecutionTable[Memory::GetPC()].registerNames,i);
+			m_InstructionUMap[m_ExecutionTable[Memory::GetPC()].m_Instruction]->Execute(m_ExecutionTable[Memory::GetPC()].m_Datas,
+				m_ExecutionTable[Memory::GetPC()].m_Immediate, m_ExecutionTable[Memory::GetPC()].m_RegisterNames,i);
 			Memory::SetVirtualPC(Memory::GetVirtualPC()+1);
 			counter++;
 			if (counter > 10000) {

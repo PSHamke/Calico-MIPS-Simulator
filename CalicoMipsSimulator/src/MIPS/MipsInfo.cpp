@@ -98,7 +98,7 @@ namespace MIPSLayer {
 		{"j",{ Special_Label |Special_Constant}}
 
 
-	}; // pair of instruction and expected arguments
+	}; // pair of m_Instruction and expected arguments
 
 	std::pair<std::string, int> registers[] = {
 			{"$zero",Reg_Constant_Value}, {"$at",Reg_Assembler_Temporary}, {"$v0",Reg_Expression_Evaluation},

@@ -33,7 +33,7 @@ project "CalicoMipsSimulator"
 		"%{prj.name}/src/AssemblyCore",
 		"%{prj.name}/src/Noble-16",
 		"%{prj.name}/vendor/spdlog/include",
-		"%{prj.name}/vendor/csv-parser",
+		"%{prj.name}/vendor/fast-cpp-csv-parser",
 		"%{IncludeDir.ImGui}"
 		
 	}
