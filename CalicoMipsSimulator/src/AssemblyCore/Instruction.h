@@ -98,7 +98,7 @@ public:
 				textMem= this->getOpcode() << 12 | registerNumbers[0] << 9 | this->getFunct();
 			}
 			else {
-				textMem = this->getOpcode() << 12 | registerNumbers[0] << 9 | registerNumbers[1] << 6 | registerNumbers[2] << 3 | this->getFunct(); // how memory handled
+				textMem = this->getOpcode() << 12 | registerNumbers[1] << 9 | registerNumbers[2] << 6 | registerNumbers[0] << 3 | this->getFunct(); // how memory handled
 			}
 			if (callingReason == 3) {
 				Memory::GetTextMemory().push_back(textMem);
@@ -138,7 +138,7 @@ public:
 					textMem = this->getOpcode() << 26 | registerNumbers[0] << 21 | registerNumbers[1] << 16 | immediate; // how memory handled
 				}
 				else {
-					textMem = this->getOpcode() << 26 | registerNumbers[0] << 21 | immediate;
+					textMem = this->getOpcode() << 26 | registerNumbers[0] << 16 | immediate;
 				} // how memory handled
 				Memory::GetTextMemory().push_back(textMem);
 
@@ -152,16 +152,17 @@ public:
 		else {
 			if (callingReason == 3) {
 				if (registerNumbers.size() == 2) {
-					textMem = this->getOpcode() << 12 | registerNumbers[0] << 9 | registerNumbers[1] << 6 | immediate; // how memory handled
+					textMem = this->getOpcode() << 12 | registerNumbers[1] << 9 | registerNumbers[0] << 6 | immediate; // how memory handled
 				}
 				else {
-					textMem = this->getOpcode() << 12 | registerNumbers[0] << 9 | immediate;
+					textMem = this->getOpcode() << 12 | registerNumbers[0] << 6 | immediate;
 				} // how memory handled
 				Memory::GetTextMemory().push_back(textMem);
 
 			}
 			else {
 				Memory::SetPC(Memory::GetPC() + 1);
+				immediate = SIGN_EXTEND(32, 6, immediate);
 				result = m_Functionality(Registers[0], Registers[1], immediate);
 			}
 		}

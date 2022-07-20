@@ -47,6 +47,7 @@ RegisterInfos* Register::GetRegisterInfos16()
 	registerInfos->push_back(std::make_pair("$t2", "Temporary Register"));
 	registerInfos->push_back(std::make_pair("$s0", "Saved Temporary Register"));
 	registerInfos->push_back(std::make_pair("$s1", "Saved Temporary Register"));
+	registerInfos->push_back(std::make_pair("$tmpra", "Return Address"));	
 	registerInfos->push_back(std::make_pair("$ra", "Return Address"));	
 	return registerInfos;
 }

@@ -31,9 +31,12 @@ public:
 	ImFont* GetFont();
 	void SetFlag(unsigned int flag);
 	std::string GetInstanceId();
+	void Lock();
+	void Unlock();
 private:
 	std::string mInstanceId;
 	int mFlag;
+	bool mLocked=false;
 	ImFont* mFont;
 	MemoryType mType;
 	void RenderHex();

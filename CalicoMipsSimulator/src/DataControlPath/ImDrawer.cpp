@@ -833,7 +833,7 @@ void ImDrawer::Init()
 		pathTexts.push_back({ PText("SL1In",400.f,97.5f,scale,color,"12",12.0f) });
 		pathTexts.push_back({ PText("SL1Out",480.f,97.5f,scale,color,"13",12.0f) });
 		pathTexts.push_back({ PText("SignExtIn",512.55f,669.0f,scale,color,"6",12.0f) });
-		pathTexts.push_back({ PText("SignExtOut",605.f,669.0f,scale,color,"12",12.0f) });
+		pathTexts.push_back({ PText("SignExtOut",605.f,669.0f,scale,color,"16",12.0f) });
 		
 		pathTexts.push_back({ PText("MUX1",435.f,597.5f,scale,color,"0\nM\nU\nX\n1",11.0f) });
 		pathTexts.push_back({ PText("MUX2",459.f,500.5f,scale,color,"0\nM\nU\nX\n1",11.0f) });

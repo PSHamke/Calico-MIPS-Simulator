@@ -7,6 +7,7 @@
 #include "ExecutionTable.h"
 #include "HelperString.h"
 #include "NobleInfo.h"
+
 namespace NobleLayer {
 	class Noble {
 	public:
@@ -70,6 +71,24 @@ namespace NobleLayer {
 		static void SetStatus(bool status) {
 			return Get().ISetStatus(status);
 		}
+
+		static int GetEditorLine() {
+			return Get().IGetEditorLine();
+		}
+		static void SetEditorLine(int line) {
+			Get().ISetEditorLine(line);
+		}
+		static int GetActiveInsMem() {
+			return Get().IGetActiveInsMem();
+		}
+
+		static void SetActiveInsMem(int activeMem) {
+			Get().ISetActiveInsMem(activeMem);
+		}
+
+		static int GetTotalCycle() {
+			return Get().IGetTotalCycle();
+		}
 	private:
 
 		Noble() {
@@ -114,7 +133,7 @@ namespace NobleLayer {
 		}
 		std::string IGetOutputString();
 		std::string IValidateInput(const std::string& data, const std::string& dataMem,int callingReason);
-		void IValidateLabel(const std::string& data, int p_CurrentLine, ErrorFlag& errorFlag);
+		void IValidateLabel(const std::string& data, int p_CurrentLine,int& instCount,ErrorFlag& errorFlag,int callingReason);
 		void IValidateInstructions(std::vector <std::string>& data, int p_CurrentLine, ErrorFlag& errorFlag);
 		void IExecute(int pStep);
 		bool ILabelInsert(const std::string label, int address);
@@ -123,11 +142,34 @@ namespace NobleLayer {
 		std::string Noble::CreateNobleOutput(int registerNum);
 		std::string CreateCOutput(std::vector<std::string> data, int argCount, int instructionCode, int functCode);
 		void ICreateInstructionTable();
+		int IValidateRelativePC(int PC);
 		bool IGetStatus() {
 			return m_Status;
 		}
+		int IGetEditorLine() {
+			return m_EditorLine;
+		}
+		void ISetEditorLine(int line) {
+			m_EditorLine = line;
+		}
+
+		void ISetExecPC(int PC) {
+			m_ExecPC = PC;
+		}
+		int IGetExecPC() {
+			return m_ExecPC;
+		}
+		int IGetTotalCycle() {
+			return m_TotalCycle;
+		}
 		void ISetStatus(bool status) {
 			m_Status = status;
+		}
+		int IGetActiveInsMem() {
+			return m_ActiveInsMem;
+		}
+		void ISetActiveInsMem(int activeMem) {
+			m_ActiveInsMem = activeMem;
 		}
 		void IPrintExecutionTable() {
 			for (const auto& it : m_ExecutionTable) {
@@ -157,6 +199,10 @@ namespace NobleLayer {
 		std::vector<std::string> m_OutputBuffer;
 		bool m_SegmentStart = false;
 		bool m_Status = false;
+		int m_EditorLine = 0;
+		int m_ExecPC;
+		int m_ActiveInsMem = -1;
+		int m_TotalCycle = 0;
 	};
 
 	bool isSegmentInstruction(const std::string& token);

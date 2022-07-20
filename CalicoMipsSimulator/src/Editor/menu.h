@@ -12,4 +12,5 @@ namespace Menu
 	void TitleBarMemoryView();
 	void TitleBarRegisterView();
 	void Render();
+	void SimulationAction();
 }

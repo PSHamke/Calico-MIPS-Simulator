@@ -24,4 +24,9 @@ namespace Settings
 	static bool StepForwardStatus = false;
 	static bool StepBackwardStatus = false;
 	static bool ResetStatus = false;
+	static char SimulationName[128] = "Test";
+	static char InputAsmPath[128]="";
+	static char InputInitialMem[128]="";
+	static char OutputRegFile[128] = "";
+	static char OutputDataMem[128]="";
 }

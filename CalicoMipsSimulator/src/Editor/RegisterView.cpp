@@ -220,10 +220,19 @@ void RegisterView::Render16Bit()
 			for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; row++)
 			{
 				registerValue = NobleLayer::Noble::GetRegisterUMap()[regInfos->at(row).first.c_str()]->getValue();
+				if (mLocked) {
+					registerValue = 0;
+				}
 				ImGui::PushStyleColor(ImGuiCol_Text, registerValue ? activeRegister : inactiveRegister);
 				ImGui::TableNextRow();
 				ImGui::TableSetColumnIndex(0);
-				ImGui::Text("%s", regInfos->at(row).first.c_str()); // Register name
+				if (row == 7) {
+					ImGui::Text("$ra"); // Register name
+				}
+				else {
+					ImGui::Text("%s", regInfos->at(row).first.c_str()); // Register name
+				}
+				
 				if (ImGui::IsItemHovered())
 					ImGui::SetTooltip("%s", regInfos->at(row).second.c_str());
 
@@ -243,7 +252,7 @@ void RegisterView::Render16Bit()
 					ImGui::Text("%d", registerValue);
 				}
 				else if (valueState == 1) {
-					ImGui::Text("0x%.4X", registerValue);
+					ImGui::Text("0x%.4X", (registerValue&0xFFFF));
 				}
 				else if (valueState == 2) {
 					ImGui::Text("0b%s", std::bitset<16>(registerValue).to_string().c_str());
@@ -335,4 +344,12 @@ std::vector<RegisterView*>& RegisterView::GetAllInstances()
 std::string RegisterView::GetInstanceId()
 {
 	return this->mInstanceId;
+}
+void RegisterView::Lock()
+{
+	mLocked = true;
+}
+void RegisterView::Unlock()
+{
+	mLocked = false;
 }

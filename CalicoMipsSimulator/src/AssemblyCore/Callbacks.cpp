@@ -1,5 +1,6 @@
 #include "Memory.h"
 #include "HelperString.h"
+#include <bitset>
 
 int addCallback(int& rd, int& rt, int& rs, unsigned int shamt) {
 
@@ -129,7 +130,7 @@ int muliCallback(int& rt, int& rs, int& immediate) {
 	return rt;
 }
 int luiCallback(int& rt, int& rs, int& immediate) {
-	rt = immediate << 6;
+	rt = immediate << 10;
 	return rt;
 }
 

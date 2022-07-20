@@ -1,5 +1,5 @@
 #include "NobleLayer.h"
-
+#include <bitset>
 namespace NobleLayer {
 	
 	void Noble::InitRegistersMap()
@@ -11,6 +11,7 @@ namespace NobleLayer {
 		m_RegisterUMap["$t2"]   = new Register("t2", 4, NULL, registerStatus::free);
 		m_RegisterUMap["$s0"]   = new Register("s0", 5, NULL, registerStatus::free);
 		m_RegisterUMap["$s1"]   = new Register("s1", 6, NULL, registerStatus::free);
+		m_RegisterUMap["$tmpra"]= new Register("ra", 7, NULL, registerStatus::free);
 		m_RegisterUMap["$ra"]   = new Register("ra", 7, NULL, registerStatus::free);
 	}
 
@@ -162,7 +163,7 @@ namespace NobleLayer {
 		ResetCResultMap();
 		ResetLabelUMap();
 		IResetExecutionTable();
-
+		CL_CORE_ERROR("Validate Input Calling Reason {0}", callingReason);
 
 		while ((pos = data.find(delimiter)) != std::string::npos) {
 			temp = trim(data.substr(0, pos));
@@ -197,9 +198,11 @@ namespace NobleLayer {
 		ErrorFlag errorflag = Error_None;
 		// First find all labels construct label map, then investigate instructions 
 		int TokenizedLineCount = 0;
-
-		for (auto& token : Tokens)
-			IValidateLabel(token.at(0), TokenizedLineCount++, errorflag);
+		int instCount = 0;
+		for (auto& token : Tokens) {
+			IValidateLabel(token.at(0), TokenizedLineCount++,instCount, errorflag,callingReason);
+		}
+			
 
 		// Should check all labels first 
 		ExecutionTable temp1;
@@ -208,10 +211,11 @@ namespace NobleLayer {
 			errorflag = Error_None;
 			switch (token.size()) {
 			case 1:
-				temp1.m_Address = TokenizedLineCount;
+				temp1.m_Address = m_ExecutionTable.size();
 				temp1.m_Instruction = "label";
+				temp1.m_EditorLine = TokenizedLineCount;
 				m_ExecutionTable.push_back(temp1);
-				CL_CORE_ERROR("Label : {}", token.at(0));
+				CL_CORE_ERROR("Label : {}", temp1.m_Address);
 				break;
 			case 2: case 3: case 4:
 				IValidateInstructions(token, TokenizedLineCount, errorflag);
@@ -238,7 +242,7 @@ namespace NobleLayer {
 		return IConstructCResult();
 	}
 
-	void Noble::IValidateLabel(const std::string& pInput, int pCurrentLine, ErrorFlag& pErrorFlag)
+	void Noble::IValidateLabel(const std::string& pInput, int pCurrentLine,int & instCount, ErrorFlag& pErrorFlag, int callingReason)
 	{
 		bool check = false;
 		if (isSegmentInstruction(pInput)) { // Check for segment main only to wrap with main function ** Better visualize not necessary **
@@ -254,7 +258,7 @@ namespace NobleLayer {
 			}
 		}
 		else if (pInput.back() == ':') { // Make sure its a label and ended with ':' 
-			check = ILabelInsert(pInput.substr(0, pInput.size() - 1), pCurrentLine); // insert label without ':'
+			check = ILabelInsert(pInput.substr(0, pInput.size() - 1), callingReason == 3 ? instCount : pCurrentLine); // insert label without ':'
 			if (!check) {
 				pErrorFlag |= Label_Duplicate;
 				m_CResultMap[pCurrentLine] = string_format("[Error] Duplicate label.");
@@ -267,6 +271,8 @@ namespace NobleLayer {
 		else {
 			pErrorFlag |= Incompleted_Label;
 			m_CResultMap[pCurrentLine] = string_format("[Error] incomplete label [%s] at line %d.", pInput.c_str(), pCurrentLine);
+			if (pInput != "nout")
+				instCount++;
 		}
 	}
 
@@ -282,7 +288,8 @@ namespace NobleLayer {
 		std::vector<std::reference_wrapper<int>> datas;
 		std::vector<int> vecRegisterNames;
 		unsigned int PC = 0;
-		
+		bool negativeNum = false;
+
 		if (expectedArgumentsSize == 4) { // Possibly R type need to validate Shift amount as well.
 			checkShamt = (expectedArguments.at(3) & Special_Shamt);
 			expectedArgumentsSize -= 1; // Shamt is not a part of the input 
@@ -335,14 +342,20 @@ namespace NobleLayer {
 				std::string& token = pInput.at(i);
 				expectedArgument = expectedArguments.at(i - 1);
 				if (expectedArgument & Special_Constant || expectedArgument & Special_Negligible) { // Check for constant and negligible
-
-					if (is_number(token)) {
-						immediate = (atoi(token.c_str()));
-
-						//if (expectedArguments.at(i - 1) & Special_Paranthesis)
-							//m_Immediate = m_Immediate;
-						//m_Immediates.push_back(m_Immediate);
-						//m_Datas.push_back((m_Immediates.back()));
+					if (token.at(0) == '-') {
+						std::string tempToken = token.substr(1, token.length() - 1);
+						if (is_number(tempToken)) {
+							CL_CORE_ERROR("Bit representation {0}", std::bitset<32>((~(atoi(tempToken.c_str()) % 32) & 0x3F) + 1));
+							immediate = (~(atoi(tempToken.c_str())%33) & 0x3F) + 1;
+							//immediate = -(atoi(tempToken.c_str()));
+						}
+						else {
+							pErrorFlag |= Numeric_Value;
+							break;
+						}
+					}
+					else if (is_number(token)) {
+						immediate =  (atoi(token.c_str())) %32;
 					}
 					else if (expectedArgument & Special_Label) { // it might be label // label might not be registered to map yet.. 
 						CL_CORE_ERROR("Label Expected!");
@@ -385,7 +398,7 @@ namespace NobleLayer {
 
 				if (Memory::GetCallingReason() == 3)
 					m_InstructionUMap[pInput.at(0)]->Execute(datas, immediate, vecRegisterNames, PC);
-				
+
 				std::string inputLine = "";
 				ExecutionTable temp;
 				temp.m_Address = pCurrentLine;
@@ -428,7 +441,13 @@ namespace NobleLayer {
 		Memory::SetCallingReason(4); // Set .text memory read only 
 		if (step == -1) {
 			while (Memory::GetPC() < m_ExecutionTable.size()) {
+				int inscounter = 0;
+				for (int i = 0; i < Memory::GetPC(); i++) {
+					if (m_ExecutionTable[i].m_Instruction != "label" && m_ExecutionTable[i].m_Instruction != "nout") {
+						inscounter++;
 
+					}
+				}
 				CL_CORE_INFO("Execution done for address {0} Current PC = {1}", m_ExecutionTable[Memory::GetPC()].m_Address, Memory::GetPC());
 				if (m_ExecutionTable[Memory::GetPC()].m_Instruction == "label") {
 					Memory::SetPC(Memory::GetPC() + 1);
@@ -448,6 +467,8 @@ namespace NobleLayer {
 				else if (m_ExecutionTable[Memory::GetPC()].m_Instruction == "jal") {
 					m_RegisterUMap["$ra"]->getRef() -= m_RegisterUMap["$ra"]->getRef(); // Kinda messed up here 
 					m_RegisterUMap["$ra"]->getRef() += Memory::GetPC() + 1;
+					m_RegisterUMap["$tmpra"]->getRef() -= m_RegisterUMap["$tmpra"]->getRef(); // Kinda messed up here 
+					m_RegisterUMap["$tmpra"]->getRef() += inscounter+1;
 				}
 				m_InstructionUMap[m_ExecutionTable[Memory::GetPC()].m_Instruction]->Execute(
 					m_ExecutionTable[Memory::GetPC()].m_Datas, m_ExecutionTable[Memory::GetPC()].m_Immediate,
@@ -458,13 +479,22 @@ namespace NobleLayer {
 					CL_CORE_INFO("Infinite Loop aborted!");
 					break;
 				}
-
+				CL_CORE_INFO("Execution count {0}", counter);
+				
 			}
+			m_TotalCycle = counter;
 		}
 		else {
 			while (Memory::GetPC() < m_ExecutionTable.size() && Memory::GetVirtualPC() < step) {
 
-				CL_CORE_INFO("Execution done for address {0} Current PC = {1}", m_ExecutionTable[Memory::GetPC()].m_Address, Memory::GetPC());
+				int inscounter = 0;
+				for (int i = 0; i < Memory::GetPC(); i++) {
+					if (m_ExecutionTable[i].m_Instruction != "label" && m_ExecutionTable[i].m_Instruction != "nout") {
+						inscounter++;
+
+					}
+				}
+				CL_CORE_INFO("Current Execution Memory Relevance PC = {0}", inscounter);
 				if (m_ExecutionTable[Memory::GetPC()].m_Instruction == "label") {
 					Memory::SetPC(Memory::GetPC() + 1);
 					CL_CORE_INFO("Label here {0}", Memory::GetPC());
@@ -483,12 +513,17 @@ namespace NobleLayer {
 				else if (m_ExecutionTable[Memory::GetPC()].m_Instruction == "jal") {
 					m_RegisterUMap["$ra"]->getRef() -= m_RegisterUMap["$ra"]->getRef(); // Kinda messed up here 
 					m_RegisterUMap["$ra"]->getRef() += Memory::GetPC() + 1;
+					m_RegisterUMap["$tmpra"]->getRef() -= m_RegisterUMap["$tmpra"]->getRef(); // Kinda messed up here 
+					m_RegisterUMap["$tmpra"]->getRef() += inscounter + 1;
+
 				}
 				m_InstructionUMap[m_ExecutionTable[Memory::GetPC()].m_Instruction]->Execute(
 					m_ExecutionTable[Memory::GetPC()].m_Datas, m_ExecutionTable[Memory::GetPC()].m_Immediate,
 					m_ExecutionTable[Memory::GetPC()].m_RegisterNames, i);
 				Memory::SetVirtualPC(Memory::GetVirtualPC() + 1);
 				counter++;
+				m_ActiveInsMem = inscounter;
+				
 				if (counter > 10000) {
 					CL_CORE_INFO("Infinite Loop aborted!");
 					break;
@@ -496,7 +531,7 @@ namespace NobleLayer {
 
 			}
 		}
-		
+
 	}
 
 	bool Noble::ILabelInsert(const std::string label, int address)
@@ -559,7 +594,7 @@ namespace NobleLayer {
 				result = string_format("goto %s;", data[1].c_str());
 				break;
 			case 0x1:
-				result = string_format("%s = (%s << 6);", data[1].c_str(), data[2].c_str());
+				result = string_format("%s = (%s << 10);", data[1].c_str(), data[2].c_str());
 				break;
 			case 0xE:
 				result = string_format("%s = %s * %s;", data[1].c_str(), data[2].c_str(), data[3].c_str());
@@ -617,7 +652,7 @@ namespace NobleLayer {
 
 	std::string Noble::CreateNobleOutput(int registerNum) {
 		const char* registers[8] = { "$zero","$v0","$t0","$t1","$t2","$s0","$s1","$ra" };
-		
+
 		return string_format("%s = %d", registers[registerNum], m_RegisterUMap[registers[registerNum]]->getValue());
 	}
 	bool isSegmentInstruction(const std::string& token) {
@@ -647,7 +682,7 @@ namespace NobleLayer {
 
 	std::string Noble::CreateReadableAsm(std::vector <std::string>& pInput)
 	{
-	
+
 		std::string temp = "";
 		int syntaxInfo = SyntaxInfo(pInput.at(0));
 		switch (syntaxInfo)

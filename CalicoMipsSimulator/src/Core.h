@@ -9,3 +9,4 @@
 #endif
 
 #define BIT(X) 1<<X
+#define SIGN_EXTEND(to, from, value) ((INT##to)((INT##to)(((INT##to)value) << (to - from)) >> (to - from)))

@@ -10,6 +10,9 @@
 #include "MipsLayer.h"
 #include "NobleLayer.h"
 #include "DataControlPath/ImDrawer.h"
+#include "bitset"
+#include "iostream"
+#include "fstream"
 extern ImFont* Consolas;
 
 
@@ -53,6 +56,7 @@ void Menu::Render()
 			if (ImGui::Button(ICON_FA_CHECK" Execute", ImVec2(135, 34))) {
 				Settings::ExecutePressed = !Settings::ExecutePressed;
 				
+				
 			}
 			
 			if (Settings::ExecutePressed) {
@@ -64,6 +68,7 @@ void Menu::Render()
 				MIPSLayer::MIPS::Execute(-1);
 				TextEditor::GetInstance("##OutputEditor")->SetText(string_format("Executed\nPC at 0X%.2X", 0x400000+Memory::GetPC()*4).c_str());
 				Settings::ExecutePressed = false;
+				
 				
 			}
 			ImGui::SameLine();
@@ -176,6 +181,7 @@ void Menu::Render()
 				//std::cout << error1[1] << "\n";
 				NobleLayer::Noble::ResetOutputBuffer();
 				NobleLayer::Noble::CreateInstructionTable();
+				
 				Settings::LineCounter = 0;
 				
 			}
@@ -210,6 +216,8 @@ void Menu::Render()
 				TextEditor::GetInstance("##NobleOutputEditor")->SetText(string_format("%sExecution done.\n",NobleLayer::Noble::GetOutputString().c_str()));
 				Settings::ExecutePressed = false;
 				Settings::LineCounter = Memory::GetVirtualPC()+1;
+				MemoryView::GetInstance("##NobleMainMemoryView")->Unlock();
+				RegisterView::GetInstance("##NobleMainRegisterView")->Unlock();
 
 			}
 			
@@ -314,14 +322,15 @@ void Menu::Render()
 				Settings::LineCounter--;
 				Memory::SetVirtualPC(0);
 				NobleLayer::Noble::ResetRegisterUMap();
+				Memory::FreeDataMemory();
 				Memory::SetPC(0);
 				if (Settings::LineCounter == 1) {
 					Memory::FreeTextMemory();
 					Memory::SetVirtualPC(0);
-					/*TextEditor::GetInstance("##NobleCOutputEditor")->SetText(
+					TextEditor::GetInstance("##NobleCOutputEditor")->SetText(
 						NobleLayer::Noble::ValidateInput(TextEditor::GetInstance("##NobleMainEditor")->GetText(),
 							TextEditor::GetInstance("##NobleDataEditor")->GetText(),4)
-					);*/
+					);
 					Memory::SetPC(0);
 					NobleLayer::Noble::ResetRegisterUMap();
 					Settings::ExecCounter = 0;
@@ -354,18 +363,18 @@ void Menu::Render()
 				if (Settings::LineCounter == 1) {
 					NobleLayer::Noble::ResetRegisterUMap();
 					Memory::SetVirtualPC(0);
-					//TextEditor::GetInstance("##NobleCOutputEditor")->SetText(
-					//	NobleLayer::Noble::ValidateInput(
-					//		TextEditor::GetInstance("##NobleMainEditor")->GetText(),
-					//		TextEditor::GetInstance("##NobleDataEditor")->GetText(),4)); // Read only ins mem
+					TextEditor::GetInstance("##NobleCOutputEditor")->SetText(
+						NobleLayer::Noble::ValidateInput(
+							TextEditor::GetInstance("##NobleMainEditor")->GetText(),
+							TextEditor::GetInstance("##NobleDataEditor")->GetText(),4)); // Read only ins mem
 					Memory::SetPC(0);
 					NobleLayer::Noble::ResetRegisterUMap();
 					Settings::ExecCounter = 0;
 				}
 
 				TextEditor::CurrentRunLine runLine;
-				runLine[Memory::GetPC()+1] = "";
-				CL_CORE_ERROR("For LineCounter {0} ",Settings::LineCounter);
+				runLine[Memory::GetPC() + 1] = "";
+				CL_CORE_ERROR("For LineCounter {0} ", Settings::LineCounter);
 				TextEditor::GetInstance("##NobleMainEditor")->SetCurrentMarkers(runLine);
 				NobleLayer::Noble::Execute(Settings::LineCounter);
 				TextEditor::GetInstance("##NobleOutputEditor")->SetText(NobleLayer::Noble::GetOutputString().c_str());
@@ -380,9 +389,11 @@ void Menu::Render()
 			
 			if (Settings::LineCounter <= Memory::GetVirtualPC()) {
 				Settings::StepForwardStatus = true;
+				
 			}
 			else {
 				Settings::StepForwardStatus = false;
+				NobleLayer::Noble::SetActiveInsMem(-1);
 			}
 
 			if (Settings::LineCounter != 0) {
@@ -414,6 +425,7 @@ void Menu::Render()
 				CL_CORE_ERROR("For LineCounter {0} ", Settings::LineCounter);
 				TextEditor::GetInstance("##NobleMainEditor")->SetCurrentMarkers(runLine);
 				NobleLayer::Noble::ResetOutputBuffer();
+				NobleLayer::Noble::SetEditorLine(0);
 			}
 			if (!Settings::ExecuteStatus || !Settings::ResetStatus)
 			{
@@ -482,6 +494,7 @@ void Menu::Render()
 
 						for (const auto& it : NobleLayer::Noble::GetInstructionTable()) {
 							if (ImGui::Button(it.m_InputLine.c_str(), ImVec2(180, 20))) {
+								CL_CORE_ERROR("HERE!");
 								ImDrawer::ActivatePath(std::string(it.m_Instruction));
 								ImDrawer::SetCurrentScene(ImDrawer::Scene::ImDrawer_Path);
 								ImDrawer::SetCurrentSceneHeader(std::string (it.m_Instruction));
@@ -505,12 +518,58 @@ void Menu::Render()
 			const char* viewType[2] = { "HEX", "BIN" };
 			const char* memoryTypes[2] = { "INS MEMORY","DATA MEMORY" };
 			
-			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(ImColor(0, 0, 0, 0)));
-			ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.1, 0.3, 0.2, 1));
-			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.1, 0.3, 0.2, 1));
-			if (ImGui::Button(Settings::ViewType[Settings::ViewTypeCounter], ImVec2(370, 34))) {
-				Settings::ViewTypeCounter = (Settings::ViewTypeCounter + 1) % 2;
-				ImDrawer::SetDrawList(ImGui::GetWindowDrawList());
+			if (!Settings::ExecuteStatus)
+			{
+				ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+				ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+			}
+			if (ImGui::Button(ICON_FA_MICROCHIP" Xilinx Vivado Simulate", ImVec2(370, 34))) {
+				std::string iDataMemPathStr = "C:\\Users\\hayre\\OneDrive\\Masaüstü\\Noble-16\\Noble-16.sim\\sim_1\\behav\\xsim\\test\\input\\" + std::string(Settings::SimulationName) + "_idmem.inoble";
+				std::ofstream MyFile2(iDataMemPathStr);
+				for (auto& it : Memory::GetDataMemory()) {
+
+					MyFile2 << std::bitset<16>(it.second.second) << "\n";
+				}
+
+				MyFile2.close();
+				int tCounter = 0;
+				{
+					MemoryView::GetInstance("##NobleMainMemoryView")->Lock();
+					RegisterView::GetInstance("##NobleMainRegisterView")->Lock();
+					TextEditor::GetInstance("##NobleCOutputEditor")->SetText(
+							NobleLayer::Noble::ValidateInput(TextEditor::GetInstance("##NobleMainEditor")->GetText(),
+							TextEditor::GetInstance("##NobleDataEditor")->GetText(), 4));
+					NobleLayer::Noble::Execute(-1);
+				}
+				CL_CORE_ERROR("Total Cycle! {0}", ((NobleLayer::Noble::GetTotalCycle()+1)*10)+5);
+				std::ofstream SpecsFile("C:\\Users\\hayre\\OneDrive\\Masaüstü\\Noble-16\\Noble-16.srcs\\sim_1\\new\\testspecs.v");
+				SpecsFile << "`ifndef TESTSPECS_H_" << "\n" << "`define TESTSPECS_H_" << "\n";
+				SpecsFile << "`define simulation_time #" << ((NobleLayer::Noble::GetTotalCycle() + 1) * 10) + 5 << "\n";
+				SpecsFile << "`endif";
+				SpecsFile.close();
+				
+				std::ofstream SpecsFile2("C:\\Users\\hayre\\OneDrive\\Masaüstü\\Noble-16\\Noble-16.srcs\\sources_1\\new\\testspecs_1.v");
+				SpecsFile2 << "`ifndef TESTSPECS_1_H_" << "\n" << "`define TESTSPECS_1_H_" << "\n";
+				SpecsFile2 << "`define inputFile \"" << Settings::InputAsmPath<< "\"\n";
+				SpecsFile2 << "`define inputFileDataMem \"" <<Settings::InputInitialMem << "\"\n";
+				SpecsFile2 << "`define outputFileMem \"" << Settings::OutputDataMem<< "\"\n";
+				SpecsFile2 << "`define outputFileReg \"" << Settings::OutputRegFile<< "\"\n";
+				SpecsFile2 << "`endif";
+				SpecsFile2.close();
+				std::string inputAsmPathStr = "C:\\Users\\hayre\\OneDrive\\Masaüstü\\Noble-16\\Noble-16.sim\\sim_1\\behav\\xsim\\test\\input\\" + std::string (Settings::SimulationName) + ".noble";
+				std::ofstream MyFile(inputAsmPathStr);
+				for (auto& it : Memory::GetTextMemory()) {
+					CL_CORE_INFO("{0}", std::bitset<16>(it));
+					MyFile << std::bitset<16>(it) << "\n";
+				}
+				MyFile << std::bitset<16>(-11967);
+				MyFile.close();
+				SimulationAction();
+			}
+			if (!Settings::ExecuteStatus)
+			{
+				ImGui::PopItemFlag();
+				ImGui::PopStyleVar();
 			}
 			if (Settings::ViewTypeCounter == 1) {
 				//ImDrawer::Draw();
@@ -518,9 +577,9 @@ void Menu::Render()
 			if (Settings::ViewTypeCounter == 0) {
 				Settings::MemoryViewActive = true;
 			}
-			ImGui::PopStyleColor(3);
-
-			if (ImGui::Button(memoryTypes[Settings::MemoryKind], ImVec2(181, 30))) {
+			
+			ImGui::Spacing();
+			if (ImGui::Button(memoryTypes[Settings::MemoryKind], ImVec2(181, 34))) {
 				Settings::MemoryKind = (Settings::MemoryKind + 1) % 2;
 				CL_CORE_INFO("Button press {0}", Settings::MemoryKind);
 			}
@@ -528,7 +587,7 @@ void Menu::Render()
 
 			
 			ImGui::SameLine();
-			if (ImGui::Button(string_format("MemoryView [%s]", viewType[Settings::MemoryViewType]).c_str(), ImVec2(181, 30))) {
+			if (ImGui::Button(string_format("MemoryView [%s]", viewType[Settings::MemoryViewType]).c_str(), ImVec2(181, 34))) {
 				Settings::MemoryViewType = (Settings::MemoryViewType + 1) % 2;
 			}
 
@@ -543,11 +602,15 @@ void Menu::Render()
 				ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(ImColor(0, 0, 0, 0)));
 				ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.1, 0.3, 0.2, 1));
 				ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.1, 0.3, 0.2, 1));
-				
-				if (ImGui::Button("REGISTERS", ImVec2(370, 30))) {
+				float temp = Consolas->Scale;
+				Consolas->Scale = 0.80;
+				ImGui::PushFont(Consolas);
+				if (ImGui::Button("REGISTERS", ImVec2(370, 22))) {
 					NobleLayer::Noble::ResetRegisterUMap();
 					//Settings::MemoryViewType = (Settings::MemoryViewType + 1) % 2;
 				}
+				Consolas->Scale = temp;
+				ImGui::PopFont();
 				ImGui::PopStyleColor(3);
 				RegisterView::GetInstance("##NobleMainRegisterView")->Render16Bit();
 			}
@@ -670,10 +733,37 @@ void Menu::RegisterViewTheme()
 void Menu::TitleBar(MSG& msg) {
 	if (ImGui::BeginMenuBar())
 	{
+		ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(ImColor(34, 16, 54, 130)));
+		ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(ImColor(34, 16, 54, 130)));
+		ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(ImColor(34, 16, 54, 130)));
 		if (ImGui::BeginMenu("Menu"))
 		{
+			if (ImGui::BeginMenu("Simulation Options"))
+			{
+				static int n = 0;
+				ImGui::Combo("Platform", &n, "Xilinx Vivado\0None\0");
+				
+				ImGui::InputText("Simulation Name", Settings::SimulationName, IM_ARRAYSIZE(Settings::SimulationName));
+				if (ImGui::BeginMenu("Input Paths")) {
+					sprintf(Settings::InputAsmPath,"./test/input/%s.noble", Settings::SimulationName);
+					ImGui::InputText("ASM Binary", Settings::InputAsmPath, IM_ARRAYSIZE(Settings::InputAsmPath));
+					sprintf(Settings::InputInitialMem, "./test/input/%s_idmem.inoble", Settings::SimulationName);
+					ImGui::InputText("Initial Data Mem", Settings::InputInitialMem, IM_ARRAYSIZE(Settings::InputInitialMem));
+					ImGui::EndMenu();
+				}
+				if (ImGui::BeginMenu("Output Paths")) {
+					sprintf(Settings::OutputRegFile, "./test/output/%s_regfile.nro", Settings::SimulationName);
+					ImGui::InputText("Register Output", Settings::OutputRegFile, IM_ARRAYSIZE(Settings::OutputRegFile));
+					sprintf(Settings::OutputDataMem, "./test/output/%s_datamem.nmo", Settings::SimulationName);
+					ImGui::InputText("Data Mem Output", Settings::OutputDataMem, IM_ARRAYSIZE(Settings::OutputDataMem));
+					ImGui::EndMenu();
+				}
+				
+				ImGui::EndMenu();
+			}
 			ImGui::EndMenu();
 		}
+		ImGui::PopStyleColor(3);
 		ImGui::SetCursorPosX(ImGui::GetWindowWidth() - 30);
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(ImColor(34, 16, 54, 130)));
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(ImColor(107, 3, 252, 255))); 
@@ -743,4 +833,18 @@ void Menu::TitleBarRegisterView() {
 		
 		ImGui::EndMenuBar();
 	}
+}
+
+void Menu::SimulationAction()
+{
+	if (Settings::InputAsmPath[0] != '\0' && Settings::InputInitialMem[0] != '\0' && Settings::OutputDataMem[0] != '\0' && Settings::OutputRegFile[0] != '\0') {
+		std::string SimulationStr = string_format("Simulation configurations\n \"%s\" created!", Settings::SimulationName);
+		TextEditor::GetInstance("##NobleOutputEditor")->SetText(SimulationStr);
+		CL_CORE_INFO("{0}", Settings::InputAsmPath);
+	}
+	else {
+		TextEditor::GetInstance("##NobleOutputEditor")->SetText("Configuration Error!");
+	}
+	
+
 }

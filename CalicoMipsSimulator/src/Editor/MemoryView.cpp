@@ -102,6 +102,15 @@ std::string MemoryView::GetInstanceId()
 	return this->mInstanceId;
 }
 
+void MemoryView::Lock()
+{
+	mLocked = true;
+}
+void MemoryView::Unlock()
+{
+	mLocked = false;
+}
+
 ImFont* MemoryView::GetFont() {
 	return mFont;
 }
@@ -338,6 +347,8 @@ void MemoryView::Render16BitHex()
 					ImGui::TableSetColumnIndex(column);
 
 					result = Memory::HandleMemoryByte(row, column, mType == MemoryType::Text ? 0 : 1, isValidMem);
+					if (mType==MemoryType::Data)
+						isValidMem = !mLocked && isValidMem;
 					ImGui::PushStyleColor(ImGuiCol_Text, isValidMem ? activeMemory : inactiveMemory);
 					ImGui::Text("%.2X", isValidMem ? result : 0);
 					ImGui::PopStyleColor();
@@ -503,7 +514,7 @@ void MemoryView::Render16BitBinary()
 
 	bool isValidMem = false;
 	int result = 0;
-
+	static int timeCount = 0;
 	// When using ScrollX or ScrollY we need to specify a size for our table container!
 	// Otherwise by default the table will fit all available space, like a BeginChild() call.
 	//CL_CORE_WARN("Text base = {0}", TEXT_BASE_HEIGHT);
@@ -522,8 +533,12 @@ void MemoryView::Render16BitBinary()
 		}
 
 		//ImGui::TableSetupColumn("EM", ImGuiTableColumnFlags_WidthFixed, 16);
-
-		sprintf(buf2, "ASCII");
+		if (mType == MemoryType::Data) {
+			sprintf(buf2, "VALUE");
+		}
+		else {
+			sprintf(buf2, "ASCII");
+		}
 		ImGui::TableSetupColumn(buf2, ImGuiTableColumnFlags_WidthFixed, TEXT_BASE_HEIGHT * 7);
 
 
@@ -542,6 +557,7 @@ void MemoryView::Render16BitBinary()
 				ImGui::TableSetColumnIndex(0);
 				ImGui::Text("0x%.3X", addressBase + (row) * 0x2); // Address section
 				Memory::HandleMemoryBit(row, 0, mType == MemoryType::Text ? 0 : 1, isValidMem);
+				
 				if (mType== MemoryType::Text && isValidMem) {
 					if (ImGui::IsItemHovered()) {
 						SetTextMemoryToolTip(row);
@@ -553,21 +569,47 @@ void MemoryView::Render16BitBinary()
 						SetDataMemoryToolTip(row);
 					}
 				}
-				
+				if (mType == MemoryType::Text) {
+					if (row == NobleLayer::Noble::GetActiveInsMem()) {
+						activeMemory = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
+					}
+					else {
+						activeMemory = ImVec4(0.0f, 0.1f, 1.0f, 1.0f);
+					}
+				}
 				
 				for (int column = 1; column < 17; column++)
 				{
 					ImGui::TableSetColumnIndex(column);
 					result = Memory::HandleMemoryBit(row, 16 - column, mType == MemoryType::Text ? 0 : 1, isValidMem);
-					
+					if (mType == MemoryType::Data)
+						isValidMem = !mLocked && isValidMem;
+						
 					ImGui::PushStyleColor(ImGuiCol_Text, isValidMem ? activeMemory : inactiveMemory);
+					
 					ImGui::Text("%X", isValidMem ? result : 0);
 					ImGui::PopStyleColor();
 					ASCIIstr += isValidMem && (char)result >= 32 ? (char)result : '.';
 				}
 
 				ImGui::TableSetColumnIndex(17);
-				ImGui::Text("%s", Memory::GetAscii(row, mType == MemoryType::Text ? 0 : 1));
+				if (mType == MemoryType::Data) {
+					if (isValidMem) {
+						ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+						ImGui::Text("%d", Memory::GetDataMemory()[row].second);
+						ImGui::PopStyleColor();
+					}
+					else {
+						ImGui::Text("N/A");
+					}
+					
+				}
+				else {
+					ImGui::Text("%s", Memory::GetAscii(row, mType == MemoryType::Text ? 0 : 1));
+				}
+				
+				
+				
 
 			}
 		}
